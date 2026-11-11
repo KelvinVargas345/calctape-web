@@ -35,7 +35,14 @@
 [data-accent="slate"]{--accent:#64748B; --active-bg:rgba(100,116,139,.12);}
 [data-theme="dark"][data-accent="slate"]{--accent:#9AA7B4; --active-bg:rgba(154,167,180,.16);}
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{height:100%; overflow-x:hidden;}
+/* (v1.5) El documento NUNCA se desplaza: overflow:hidden en ambos
+   ejes. Solo la cinta ($('tape-wrap')) tiene scroll propio. Sin esto,
+   al enfocar un comentario iOS Safari / el navegador podían desplazar
+   el body y sacar la cabecera de la vista (la «parte superior que se
+   desvanece»): la cabecera es relative dentro de .app y el body con
+   scroll la sacaba de la pantalla. En impresión se restaura
+   overflow:visible (ver @media print). */
+html,body{height:100%; overflow:hidden;}
 body{
   margin:0; background:var(--tape-bg); color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -49,12 +56,11 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .app{width:100%; max-width:var(--app-max,520px); margin:0 auto; height:100dvh; display:flex; flex-direction:column; background:var(--tape-bg); position:relative;}
 
 /* ---------- Top bar ---------- */
-/* (v1.4) La cabecera es siempre opaca y nítida: fondo sólido, sin
-   backdrop-filter ni filter de desenfoque. En iOS Safari, enfocar un
-   input con fuente menor de 16 px dispara un zoom automático que deja
-   borrosa la cabecera (la capa fija se reescala sin re-renderizar);
-   por eso TODOS los inputs enfocables llevan font-size ≥ 16 px. */
-.topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:relative; z-index:30; backdrop-filter:none; -webkit-backdrop-filter:none;}
+/* (v1.5) La cabecera queda FIJADA (sticky, top:0) además de opaca:
+   nunca se desplaza fuera de la vista ni se desvanece, en ningún tema.
+   Con el body sin scroll (v1.5) no debería moverse, pero sticky es el
+   cinturón de seguridad si algo llegara a desplazar el contenedor. */
+.topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:sticky; top:0; z-index:30; backdrop-filter:none; -webkit-backdrop-filter:none;}
 .icon-btn{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--text); flex:none;}
 .icon-btn:hover{background:var(--input-bg);}
 .icon-btn svg{width:22px; height:22px;}
@@ -238,6 +244,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 
 /* ---------- Print: solo la cinta, en blanco y negro ---------- */
 @media print{
+  html,body{overflow:visible !important; height:auto !important;}
   body{background:#fff;}
   .no-print{display:none !important;}
   .app{max-width:none; height:auto; display:block;}
@@ -348,7 +355,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
     <button id="vb-tab" class="vb-btn tab" title="Cambiar teclado (K1/K2/NAV)">K1</button>
     <button id="vb-abc" class="vb-btn tab off" title="Teclado de letras (ABC)">ABC</button>
     <span class="vb-sign" id="vb-sign">&quot;+&quot;</span>
-    <button id="vb-kbd" class="vb-btn" title="Editar comentario de la l&iacute;nea activa">
+    <button id="vb-kbd" class="vb-btn" title="Mostrar el teclado num&eacute;rico">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg>
     </button>
     <button id="vb-undo" class="vb-btn" title="Deshacer">
@@ -392,7 +399,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). Despu&eacute;s de cada entrada la cinta muestra en verde el total acumulado. <b>=/&#9166;</b> inserta un subtotal fijo en verde; el &uacute;ltimo subtotal lleva doble raya.</p>
       <p><b>2b.</b> <b>Bloques independientes</b>: si escribes una l&iacute;nea de texto (por ejemplo un t&iacute;tulo de secci&oacute;n) despu&eacute;s del total en vivo, el total se congela en verde y el bloque siguiente calcula desde 0. La barra de valor muestra siempre el total del bloque actual.</p>
       <p><b>3.</b> Toca la <b>cantidad</b> de una l&iacute;nea para editar su n&uacute;mero con el teclado (el primer d&iacute;gito la reemplaza). El comentario se escribe con el <b>teclado del sistema</b>: toca el comentario o la pesta&ntilde;a <b>ABC</b> y escribe con Gboard; mientras escribes, el teclado num&eacute;rico se esconde. Toca <b>K1</b> para volver a los n&uacute;meros.</p>
-      <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal) y <b>NAV</b> navega por la cinta. Desliza el teclado a los lados para cambiar de zona. El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
+      <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal) y <b>NAV</b> navega por la cinta. Desliza el teclado a los lados para cambiar de zona. El icono del teclado (&#9000;) en la barra muestra u oculta el teclado num&eacute;rico; la pesta&ntilde;a ABC abre la edici&oacute;n del comentario con el teclado del tel&eacute;fono.</p>
       <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
       <p><b>6.</b> <b>MC / MR / M+ / M-</b> es la memoria. <b>Guardar</b> archiva la cinta en Documentos, en este dispositivo.</p>
       <p><b>7.</b> <b>Exportar TXT</b> descarga la cinta como texto, y <b>Imprimir / PDF</b> la imprime o la guarda como PDF.</p>
@@ -412,7 +419,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p><b>CalcTape Web 1.1</b></p>
       <p>Calculadora con cinta de papel. Funciona sin conexi&oacute;n y guarda tus cintas e historial en este dispositivo.</p>
       <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, comentarios con el teclado del sistema, total en vivo, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
-      <p style="color:var(--muted); font-size:12px;">Versi&oacute;n 1.4: correcciones de las anomal&iacute;as de la 1.3 — ninguna l&iacute;nea de texto se vuelve a dibujar como &laquo;+ 0.00&raquo;, los n&uacute;meros tecleados con el teclado del sistema ya no se duplican como comentario, Escape ya no borra la cinta, y la cabecera ya no se difumina en iPhone.</p>
+      <p style="color:var(--muted); font-size:12px;">Versi&oacute;n 1.5: la p&aacute;gina ya no se desplaza — solo la cinta tiene scroll y la cabecera queda siempre fija y visible, as&iacute; la parte superior no vuelve a desvanecerse. El teclado num&eacute;rico empieza oculto y se muestra con el icono &#9000;.</p>
       <button class="btn-primary" data-close="modal-info">Cerrar</button>
     </div>
   </div>
@@ -469,7 +476,9 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <button class="icon-btn" data-close="modal-news" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p><b>CalcTape Web 1.4 &mdash; Novedades</b></p>
+      <p><b>CalcTape Web 1.5 &mdash; Novedades</b></p>
+      <p>&bull; <b>La parte superior ya no se desvanece</b>: la p&aacute;gina no se desplaza — solo la cinta tiene scroll — y la cabecera queda fija y siempre visible al enfocar un comentario.</p>
+      <p>&bull; <b>Teclado num&eacute;rico opcional</b>: al entrar, la p&aacute;gina abre con el teclado del tel&eacute;fono y el teclado de la app oculto; el icono &#9000; de la barra de valor lo muestra o lo oculta (no se recuerda como visible entre entradas).</p>
       <p>&bull; <b>Texto siempre texto</b>: una l&iacute;nea de solo texto tras un total congelado ya no se dibuja como &laquo;+ 0.00&raquo; ni crea subtotales falsos.</p>
       <p>&bull; <b>N&uacute;meros con el teclado del sistema</b>: teclear &laquo;500&raquo; o &laquo;* 80&raquo; tecla a tecla ya no duplica el n&uacute;mero como comentario ni deja el total en 5.00.</p>
       <p>&bull; <b>La cinta ya no se borra sola</b>: Escape ya no vac&iacute;a la cinta y Enter fuera de un campo ya no inserta subtotales en 0.00; borrar sigue siendo el bot&oacute;n AC con confirmaci&oacute;n.</p>
@@ -531,6 +540,13 @@ var compactKeypad = false;
 var keypadTab = 0; /* 0 = K1, 1 = K2, 2 = NAV */
 var commentEditing = false;
 var tapeFull = false;
+/* (v1.5) TECLADO NUMÉRICO OPCIONAL: al entrar, la página abre con
+   el teclado del sistema y el teclado numérico de la app OCULTO por
+   defecto en cada entrada. Aclaración del usuario (18:55 AST): lo
+   visible NO se persiste entre entradas, así que kpadHidden es solo
+   estado de la sesión, no un ajuste guardado. El icono ⌨ de la barra
+   de valor lo muestra/oculta dentro de la sesión. */
+var kpadHidden = true;
 var audioCtx = null;
 var memoryValue = 0;
 var savedHistories = [];
@@ -877,6 +893,9 @@ function wireTapeRows(){
     function activateAmount(){
       setActiveLine(idx);
       activeIsLive = false;
+      /* (v1.5) Tocar la cantidad es pedir el teclado numérico: si
+         estaba oculto, vuelve a mostrarse (solo en esta sesión). */
+      if (kpadHidden) { kpadHidden = false; applyKeypadVisibility(); }
       var part = splitLine(tapeLines[idx]);
       if (part.kind === 'amount') {
         /* El primer dígito que se pulse REEMPLAZA la cantidad de esta
@@ -1651,25 +1670,67 @@ function enterCommentMode(){
   commentEditing = true;
   replaceNextDigit = false;
   document.getElementById('app').classList.add('comment-editing');
-  $('keypad').classList.add('kbd-hidden');
+  applyKeypadVisibility();
   renderKeypad();
 }
 function exitCommentMode(){
   commentEditing = false;
   document.getElementById('app').classList.remove('comment-editing');
-  if (!tapeFull) $('keypad').classList.remove('kbd-hidden');
+  applyKeypadVisibility();
   renderKeypad();
+}
+/* (v1.5) Dueño único de la visibilidad del teclado numérico: se
+   esconde mientras se escribe con el teclado del sistema
+   (commentEditing), en vista de cinta completa (tapeFull) o por la
+   preferencia de sesión (kpadHidden). Con el teclado oculto la cinta
+   ocupa el espacio liberado (el teclado es un hijo flex con
+   display:none). El botón ⌨ refleja la preferencia de sesión. */
+function applyKeypadVisibility(){
+  var hidden = commentEditing || tapeFull || kpadHidden;
+  $('keypad').classList.toggle('kbd-hidden', hidden);
+  var kb = $('vb-kbd');
+  if (kb) {
+    kb.classList.toggle('tab', !kpadHidden);
+    kb.classList.toggle('off', kpadHidden);
+    kb.title = kpadHidden ? 'Mostrar el teclado numérico' : 'Ocultar el teclado numérico';
+  }
+}
+function setTapeFull(on){
+  tapeFull = !!on;
+  document.getElementById('app').classList.toggle('tape-full', tapeFull);
+  $('fab-expand').classList.toggle('hidden', tapeFull);
+  $('fab-collapse').classList.toggle('hidden', !tapeFull);
+  applyKeypadVisibility();
 }
 function blurActiveInput(){
   var a = document.activeElement;
   if (a && a.blur) a.blur();
 }
+/* (v1.5) El documento nunca se desplaza: solo la cinta. focus() con
+   preventScroll evita que el navegador mueva el body al enfocar, y
+   este helper ajusta únicamente $('tape-wrap').scrollTop para que el
+   input quede visible dentro de la cinta. El desplazamiento
+   automático del documento al enfocar está prohibido en este archivo:
+   puede desplazar el BODY (no solo la cinta) y sacar la cabecera de
+   la vista cuando la cinta ya está en su límite de scroll. */
+function focusNoScroll(el){
+  if (!el) return;
+  try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+}
+function scrollInputIntoTapeView(el){
+  var wrap = $('tape-wrap');
+  if (!wrap || !el) return;
+  var r = el.getBoundingClientRect();
+  var wr = wrap.getBoundingClientRect();
+  if (r.top < wr.top) wrap.scrollTop -= (wr.top - r.top);
+  else if (r.bottom > wr.bottom) wrap.scrollTop += (r.bottom - wr.bottom);
+}
 function focusCommentInput(){
   if (activeIsLive) {
     var liveInp = $('live-comment-input');
     if (liveInp) {
-      liveInp.focus();
-      if (liveInp.scrollIntoView) liveInp.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      focusNoScroll(liveInp);
+      scrollInputIntoTapeView(liveInp);
       return;
     }
   }
@@ -1677,13 +1738,13 @@ function focusCommentInput(){
   if (idx < 0 || idx >= tapeLines.length) idx = tapeLines.length - 1;
   var inp = document.querySelector('.comment-input[data-idx="' + idx + '"]');
   if (inp) {
-    inp.focus();
-    if (inp.scrollIntoView) inp.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    focusNoScroll(inp);
+    scrollInputIntoTapeView(inp);
     return;
   }
   startNewLine();
   var inp2 = document.querySelector('.comment-input[data-idx="' + activeLineIndex + '"]');
-  if (inp2) inp2.focus();
+  if (inp2) { focusNoScroll(inp2); scrollInputIntoTapeView(inp2); }
 }
 function handleTapePaste(e, idx){
   if (!S.autoDetect) return;
@@ -1782,7 +1843,7 @@ function navAction(which){
     }
     case 'select': {
       var sinp = document.querySelector('.comment-input[data-idx="' + i + '"]');
-      if (sinp) { sinp.focus(); sinp.select(); }
+      if (sinp) { focusNoScroll(sinp); scrollInputIntoTapeView(sinp); sinp.select(); }
       break;
     }
     case 'copy': {
@@ -2051,6 +2112,7 @@ function applySettings(){
     inp.setAttribute('spellcheck', S.spell ? 'true' : 'false');
   });
   renderThemeGrid();
+  applyKeypadVisibility();
 }
 function renderThemeGrid(){
   var grid = $('theme-grid');
@@ -2585,6 +2647,13 @@ function init(){
   saveHistoryState();
   renderTape();
   renderKeypad();
+  /* (v1.5) Al entrar, la página abre con el teclado del sistema: el
+     teclado numérico empieza oculto y se enfoca el comentario de la
+     línea activa para que el teclado del teléfono esté listo. (En iOS
+     el teclado solo se abre con un gesto del usuario; el foco queda
+     puesto y basta un toque en la línea.) */
+  applyKeypadVisibility();
+  focusCommentInput();
   renderHistoryList();
   setupKeyboardListeners();
 
@@ -2641,6 +2710,7 @@ function init(){
   });
 
   $('vb-tab').addEventListener('click', function(){
+    if (kpadHidden) { kpadHidden = false; applyKeypadVisibility(); }
     if (commentEditing) { blurActiveInput(); keypadTab = 0; renderKeypad(); return; }
     var tabs = [0, 1];
     if (S.nav !== 'none') tabs.push(2);
@@ -2652,15 +2722,28 @@ function init(){
     if (commentEditing) { blurActiveInput(); } else { focusCommentInput(); }
   });
   $('vb-kbd').addEventListener('click', function(){
-    if (commentEditing) { blurActiveInput(); } else { focusCommentInput(); }
+    if (commentEditing) {
+      /* Estábamos con el teclado del sistema: volver al teclado de la
+         app. El botón ⌨ es también la forma de recuperar el teclado. */
+      blurActiveInput(); /* su blur llama a exitCommentMode() */
+      kpadHidden = false;
+      applyKeypadVisibility();
+      return;
+    }
+    if (tapeFull) {
+      /* En vista de cinta completa el teclado está oculto: salir de esa
+         vista y mostrar el teclado. */
+      setTapeFull(false);
+      kpadHidden = false;
+      applyKeypadVisibility();
+      return;
+    }
+    /* Mostrar/ocultar el teclado numérico (solo en esta sesión: al
+       entrar de nuevo se abre oculto). */
+    kpadHidden = !kpadHidden;
+    applyKeypadVisibility();
   });
-  $('fab').addEventListener('click', function(){
-    tapeFull = !tapeFull;
-    document.getElementById('app').classList.toggle('tape-full', tapeFull);
-    $('fab-expand').classList.toggle('hidden', tapeFull);
-    $('fab-collapse').classList.toggle('hidden', !tapeFull);
-    if (!tapeFull && !commentEditing) $('keypad').classList.remove('kbd-hidden');
-  });
+  $('fab').addEventListener('click', function(){ setTapeFull(!tapeFull); });
   $('vb-undo').addEventListener('click', undo);
   $('vb-redo').addEventListener('click', redo);
   $('vb-copy').addEventListener('click', copyTotal);
