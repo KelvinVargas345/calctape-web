@@ -35,7 +35,7 @@
 [data-accent="slate"]{--accent:#64748B; --active-bg:rgba(100,116,139,.12);}
 [data-theme="dark"][data-accent="slate"]{--accent:#9AA7B4; --active-bg:rgba(154,167,180,.16);}
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
+html,body{height:100%; overflow-x:hidden;}
 body{
   margin:0; background:var(--tape-bg); color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -62,17 +62,17 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .menu button:hover{background:var(--input-bg);}
 
 /* ---------- Tape ---------- */
-.tape-wrap{flex:1; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 16px; cursor:default; position:relative;}
+.tape-wrap{flex:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; padding:10px 0 16px; cursor:default; position:relative;}
 .tape-lines{font-size:16px;}
 .tape-lines.show-lines .trow{border-bottom:1px solid var(--rule);}
 .trow{display:flex; align-items:baseline; padding:4px 10px 4px var(--tape-indent,10px); border-left:3px solid transparent; min-height:28px;}
 .trow.active{background:var(--active-bg); border-left-color:var(--accent);}
-.trow .sign{width:22px; flex:none; text-align:center; color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:16px;}
-.trow .amt{width:132px; flex:none; text-align:right; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; color:var(--text); overflow:hidden; white-space:nowrap;}
+.trow .sign{width:22px; flex:none; text-align:center; color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:16px; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;}
+.trow .amt{width:132px; flex:none; text-align:right; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; color:var(--text); overflow:hidden; white-space:nowrap; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;}
 .trow .amt.neg{color:var(--red);}
 .trow .amt.sub{color:var(--green); font-weight:700;}
 .trow .cmt{flex:1; min-width:0; padding-left:20px; color:var(--muted); font-size:15px; display:flex; align-items:baseline; gap:2px;}
-.trow .cmt input{flex:1; min-width:0; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
+.trow .cmt input{flex:1; min-width:120px; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
 .trow .cmt input:focus{color:var(--text);}
 .trow.text-row{color:var(--muted); font-size:15px; padding-left:10px; word-break:break-word;}
 .trow.text-row.active{color:var(--text);}
@@ -84,14 +84,19 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .phantom{opacity:.7;}
 
 /* ---------- Value bar ---------- */
-.valuebar{flex:none; background:var(--valuebar-bg); border-top:1px solid var(--divider); display:flex; align-items:center; gap:2px; padding:6px 8px;}
-.vb-btn{min-width:44px; height:36px; padding:0 8px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:16px; font-weight:600; color:var(--text);}
+.valuebar{flex:none; background:var(--valuebar-bg); border-top:1px solid var(--divider); display:flex; align-items:center; gap:2px; padding:6px 6px; min-width:0;}
+.vb-btn{min-width:38px; height:36px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:16px; font-weight:600; color:var(--text);}
 .vb-btn:hover{background:var(--input-bg);}
 .vb-btn.tab{color:var(--accent);}
 .vb-btn.tab.off{color:var(--muted);}
 .vb-btn:disabled{color:var(--disabled);}
 .vb-sign{font-size:16px; color:var(--text); padding:0 4px;}
-.vb-total{margin-left:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:19px; font-weight:700; color:var(--text); padding:0 6px; white-space:nowrap;}
+.vb-total{margin-left:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:19px; font-weight:700; color:var(--text); padding:0 6px; white-space:nowrap; min-width:0;}
+@media (max-width:400px){
+  .vb-btn{min-width:34px; padding:0 4px;}
+  .vb-total{font-size:17px; padding:0 4px;}
+  .valuebar{padding:6px 4px; gap:1px;}
+}
 .vb-copy{color:var(--accent);}
 
 /* ---------- Keypad ---------- */
@@ -123,9 +128,13 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .app.classic .krow{gap:0;}
 .app.classic .modal-card{border-radius:0;}
 
-/* ---------- teclado a la derecha (pantallas anchas) ---------- */
+/* ---------- teclado a la derecha (pantallas anchas) ----------
+   La app se ensancha a 720 px para que la columna de la cinta no quede
+   aplastada: cinta ≥300 px y comentario ≥120 px. Por debajo de 760 px
+   (teléfonos) no aplica y la cinta va apilada. */
 @media (min-width:760px){
-  .app.layout-right{display:grid; grid-template-columns:minmax(0,1fr) 330px; grid-template-rows:auto minmax(0,1fr) auto;}
+  .app.layout-right{max-width:720px;}
+  .app.layout-right{display:grid; grid-template-columns:minmax(300px,1fr) 330px; grid-template-rows:auto minmax(0,1fr) auto;}
   .app.layout-right .topbar{grid-column:1; grid-row:1;}
   .app.layout-right .tape-wrap{grid-column:1; grid-row:2;}
   .app.layout-right .valuebar{grid-column:1; grid-row:3;}
@@ -368,7 +377,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
     <div class="modal-body">
       <p><b>1.</b> La cinta tiene <b>dos columnas</b>: a la izquierda el c&aacute;lculo (signo + cantidad) y a la derecha el comentario, con un espacio claro entre ambas.</p>
       <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). Despu&eacute;s de cada entrada la cinta muestra en verde el total acumulado. <b>=/&#9166;</b> inserta un subtotal fijo en verde; el &uacute;ltimo subtotal lleva doble raya.</p>
-      <p><b>3.</b> Toca una l&iacute;nea para activarla. Su comentario se escribe con el <b>teclado del sistema</b>: toca la l&iacute;nea o la pesta&ntilde;a <b>ABC</b> y escribe con Gboard; mientras escribes, el teclado num&eacute;rico se esconde. Toca <b>K1</b> para volver a los n&uacute;meros.</p>
+      <p><b>3.</b> Toca la <b>cantidad</b> de una l&iacute;nea para editar su n&uacute;mero con el teclado (el primer d&iacute;gito la reemplaza). El comentario se escribe con el <b>teclado del sistema</b>: toca el comentario o la pesta&ntilde;a <b>ABC</b> y escribe con Gboard; mientras escribes, el teclado num&eacute;rico se esconde. Toca <b>K1</b> para volver a los n&uacute;meros.</p>
       <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal) y <b>NAV</b> navega por la cinta. Desliza el teclado a los lados para cambiar de zona. El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
       <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
       <p><b>6.</b> <b>MC / MR / M+ / M-</b> es la memoria. <b>Guardar</b> archiva la cinta en Documentos, en este dispositivo.</p>
@@ -445,7 +454,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <button class="icon-btn" data-close="modal-news" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p><b>CalcTape Web 1.1 &mdash; Novedades</b></p>
+      <p><b>CalcTape Web 1.2 &mdash; Novedades</b></p>
       <p>&bull; <b>Tema claro (Crisp Azure) por defecto</b>, como la app original; el icono de la barra cambia a oscuro.</p>
       <p>&bull; <b>Comentarios con el teclado del sistema</b>: toca una l&iacute;nea o la pesta&ntilde;a ABC y escribe con Gboard; el teclado num&eacute;rico se esconde mientras escribes.</p>
       <p>&bull; <b>Total en vivo en verde</b>: despu&eacute;s de cada entrada la cinta muestra el total acumulado.</p>
@@ -454,6 +463,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p>&bull; <b>Ajustes completos</b>: decimales, redondeo, separador de miles, teclados K1/K2/NAV, vibraci&oacute;n y sonido.</p>
       <p>&bull; <b>Men&uacute; &#8942;</b>: Compartir, Imprimir, Copiar c&aacute;lculo (texto y HTML), Copiar total general, Editar teclado.</p>
       <p>&bull; <b>M+ / M-</b> muestran el valor de memoria (+2,600.00 / &minus;2,600.00) y la tecla <b>=/&#9166;</b> ahora es azul.</p>
+      <p>&bull; <b>Correcciones</b>: tocar la cantidad de una línea edita su número; el total en vivo ya no muestra valores transitorios; pulsar <b>=</b> varias veces no duplica el subtotal; y el toque largo sobre un comentario ya no abre el diálogo de borrar.</p>
       <button class="btn-primary" data-close="modal-news">Cerrar</button>
     </div>
   </div>
@@ -504,6 +514,15 @@ var savedHistories = [];
 var historyStack = [];
 var historyIndex = -1;
 var runningTotal = 0;
+/* Total en vivo ATÓMICO (v1.2): la línea de total en vivo NO es una
+   entrada de tapeLines. Es un nodo DOM estable (#live-total-row) que
+   se actualiza en su sitio y nunca se cuenta en la suma; la barra de
+   valor y la línea muestran el mismo runningTotal calculado una vez. */
+var liveComment = '';
+var activeIsLive = false;
+var replaceNextDigit = false;
+var liveRowEl = null;
+var liveRuleEl = null;
 
 function syncLegacy(){
   roundingDecimals = S.decimals;
@@ -558,7 +577,6 @@ function recalculateTape(){
   var total = 0;
   var variables = {};
   tapeLines.forEach(function(line){
-    if (line.live) { line.val = total; line.isTotal = false; return; }
     var text = (line.text || '').trim();
     if (text.indexOf('=') >= 0) {
       var parts = text.split('=');
@@ -569,8 +587,10 @@ function recalculateTape(){
     var mainContent = text;
     if (text.indexOf('#') >= 0) mainContent = text.split('#')[0].trim();
     var op = '+';
-    if (/^[+\-*\/%]/.test(mainContent)) {
-      op = mainContent.charAt(0);
+    /* Los operadores que se ven en la cinta (× ÷ −) son los de la
+       original; aquí se normalizan a ASCII antes de calcular. */
+    if (/^[+\-*\/%×÷−]/.test(mainContent)) {
+      op = opFromDisplay(mainContent.charAt(0));
       mainContent = mainContent.substring(1).trim();
     } else if (mainContent.charAt(0) === '=') {
       op = '=';
@@ -621,11 +641,6 @@ function splitMainComment(text){
 }
 function splitLine(line){
   var raw = line.text || '';
-  if (line.live) {
-    var mc0 = splitMainComment(raw);
-    var lv = line.val || 0;
-    return { kind:'live', sign: (lv < 0 ? '-' : '+'), amount: Math.abs(lv), comment: mc0.comment };
-  }
   var mc = splitMainComment(raw);
   var main = mc.main, comment = mc.comment;
   if (main.charAt(0) === '=') {
@@ -676,7 +691,6 @@ function appendCursor(row){
   if (cmt) cmt.appendChild(cur); else row.appendChild(cur);
 }
 function renderTape(){
-  ensureLiveLine();
   recalculateTape();
   var box = $('tape-lines');
   box.innerHTML = '';
@@ -689,21 +703,6 @@ function renderTape(){
 
   tapeLines.forEach(function(line, index){
     var part = splitLine(line);
-    if (part.kind === 'live') {
-      var lrule = document.createElement('div');
-      lrule.className = 'rule';
-      box.appendChild(lrule);
-      var lrow = document.createElement('div');
-      lrow.className = 'trow' + (index === activeLineIndex ? ' active' : '');
-      lrow.dataset.idx = index;
-      lrow.innerHTML =
-        '<span class="sign">' + (part.sign === '-' ? '-' : '+') + '</span>' +
-        '<span class="amt' + (part.sign === '-' ? ' neg' : ' sub') + '">' + escapeHtml(formatNumber(part.amount)) + '</span>' +
-        '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
-      if (index === activeLineIndex) appendCursor(lrow);
-      box.appendChild(lrow);
-      return;
-    }
     if (part.kind === 'subtotal') {
       var rule = document.createElement('div');
       rule.className = (index === lastSub) ? 'rule-double' : 'rule';
@@ -754,6 +753,13 @@ function renderTape(){
     box.appendChild(arow);
   });
 
+  /* Total en vivo (fila estable, fuera de tapeLines): una sola fila verde
+     con regla simple, justo tras la última entrada numérica. El nodo se
+     REUTILIZA entre renders: solo se actualiza su texto y se mueve a su
+     sitio; nunca se destruye y se vuelve a crear, así no hay duplicados
+     ni valores transitorios. Su valor es el mismo runningTotal de la barra. */
+  positionLiveRow(box);
+
   /* La original NO añade una fila final "a favor": el último total en vivo
      es la última línea de la cinta. "a favor" se escribe como comentario
      de la línea de subtotal que crea = . */
@@ -785,11 +791,26 @@ function wireTapeRows(){
     var sign = row.querySelector('.sign');
     function activateAmount(){
       setActiveLine(idx);
+      activeIsLive = false;
+      var part = splitLine(tapeLines[idx]);
+      if (part.kind === 'amount') {
+        /* El primer dígito que se pulse REEMPLAZA la cantidad de esta
+           línea (no se añade al final); los siguientes dígitos se añaden. */
+        pendingSign = opFromDisplay(part.sign);
+        replaceNextDigit = true;
+      } else if (part.kind === 'operator') {
+        pendingSign = opFromDisplay(part.sign);
+      }
       if (keypadTab === 2) { keypadTab = 0; renderKeypad(); }
+      $('vb-sign').innerHTML = '&quot;' + escapeHtml(pendingSign) + '&quot;';
     }
     if (amt) amt.addEventListener('click', activateAmount);
     if (sign) sign.addEventListener('click', activateAmount);
     row.addEventListener('contextmenu', function(e){
+      /* Un toque largo sobre el comentario es para mover el cursor del
+         teclado del sistema, no para borrar: el borrado solo se arma
+         cuando el toque empieza fuera del input. */
+      if (e.target && e.target.closest && e.target.closest('input')) return;
       e.preventDefault();
       if (tapeLines.length > 1 && confirm('¿Eliminar esta línea de la cinta?')) {
         tapeLines.splice(idx, 1);
@@ -799,7 +820,8 @@ function wireTapeRows(){
       }
     });
     var pressTimer = null;
-    row.addEventListener('touchstart', function(){
+    row.addEventListener('touchstart', function(e){
+      if (e.target && e.target.closest && e.target.closest('input')) return;
       pressTimer = setTimeout(function(){
         if (tapeLines.length > 1 && confirm('¿Eliminar esta línea de la cinta?')) {
           tapeLines.splice(idx, 1);
@@ -814,6 +836,7 @@ function wireTapeRows(){
   });
   var inputs = document.querySelectorAll('.comment-input');
   inputs.forEach(function(inp){
+    if (inp.id === 'live-comment-input') return; /* la fila en vivo tiene su propio cableado */
     var idx = parseInt(inp.dataset.idx, 10);
     if (inp.classList.contains('text-line-input')) {
       inp.addEventListener('focus', function(){ setActiveLine(idx); enterCommentMode(); });
@@ -850,6 +873,8 @@ function wireTapeRows(){
 function setActiveLine(idx){
   if (idx < 0 || idx >= tapeLines.length) return;
   activeLineIndex = idx;
+  activeIsLive = false;
+  replaceNextDigit = false;
   document.querySelectorAll('#tape-lines .trow').forEach(function(r){ r.classList.remove('active'); });
   document.querySelectorAll('#tape-lines .cursor').forEach(function(c){ c.remove(); });
   var row = document.querySelector('#tape-lines .trow[data-idx="' + idx + '"]');
@@ -870,35 +895,118 @@ function setActiveLine(idx){
   }
 }
 
-/* Una sola línea de total en vivo, justo tras la última entrada numérica.
-   Se recalcula en cada render: si la última entrada va seguida de un
-   subtotal, no se pone (el subtotal ya muestra el total). El comentario
-   que el usuario escriba en la línea en vivo se conserva. */
-function ensureLiveLine(){
-  var keepComment = '';
-  var wasActive = false;
-  for (var i = tapeLines.length - 1; i >= 0; i--) {
-    if (tapeLines[i].live) {
-      var c = splitMainComment(tapeLines[i].text).comment;
-      if (c) keepComment = c;
-      if (i === activeLineIndex) wasActive = true;
-      tapeLines.splice(i, 1);
-      if (i < activeLineIndex) activeLineIndex--;
-    }
+/* ---------- total en vivo: una sola fila estable, fuera de tapeLines ----------
+   La fila (#live-total-row) y su regla se crean UNA vez y se reutilizan
+   siempre: cada render solo actualiza su texto y la mueve (insertBefore)
+   tras la última entrada numérica. Nunca se destruye ni se duplica, y
+   nunca entra en la suma (recalculateTape solo recorre tapeLines). No se
+   muestra si no hay ninguna entrada numérica, o si la última entrada va
+   seguida de un subtotal (el subtotal ya muestra el total). */
+function ensureLiveRowEls(){
+  if (!liveRuleEl) {
+    liveRuleEl = document.createElement('div');
+    liveRuleEl.className = 'rule';
+    liveRuleEl.id = 'live-rule';
   }
+  if (!liveRowEl) {
+    liveRowEl = document.createElement('div');
+    liveRowEl.className = 'trow';
+    liveRowEl.id = 'live-total-row';
+    liveRowEl.innerHTML =
+      '<span class="sign"></span>' +
+      '<span class="amt sub"></span>' +
+      '<span class="cmt"><input type="text" id="live-comment-input" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" aria-label="Comentario del total"></span>';
+    wireLiveRow();
+  }
+}
+function positionLiveRow(box){
   var lastAmt = -1;
   tapeLines.forEach(function(l, i){ if (splitLine(l).kind === 'amount') lastAmt = i; });
-  if (lastAmt < 0) return;
-  var next = tapeLines[lastAmt + 1];
-  if (next && splitLine(next).kind === 'subtotal') return;
-  tapeLines.splice(lastAmt + 1, 0, { id: lineCounter++, text: (keepComment ? '~ # ' + keepComment : '~'), val: 0, live: true });
-  if (wasActive) activeLineIndex = lastAmt + 1;
+  var show = false;
+  if (lastAmt >= 0) {
+    var next = tapeLines[lastAmt + 1];
+    show = !(next && splitLine(next).kind === 'subtotal');
+  }
+  if (!show) {
+    if (liveRuleEl && liveRuleEl.parentNode) liveRuleEl.parentNode.removeChild(liveRuleEl);
+    if (liveRowEl && liveRowEl.parentNode) liveRowEl.parentNode.removeChild(liveRowEl);
+    if (activeIsLive) activeIsLive = false;
+    return false;
+  }
+  ensureLiveRowEls();
+  var total = runningTotal;
+  var signEl = liveRowEl.querySelector('.sign');
+  var amtEl = liveRowEl.querySelector('.amt');
+  signEl.textContent = total < 0 ? '-' : '+';
+  amtEl.textContent = formatNumber(Math.abs(total));
+  amtEl.className = 'amt' + (total < 0 ? ' neg' : ' sub');
+  var inp = liveRowEl.querySelector('input');
+  if (inp && document.activeElement !== inp) inp.value = liveComment;
+  if (inp) inp.setAttribute('spellcheck', S.spell ? 'true' : 'false');
+  liveRowEl.classList.toggle('active', !!activeIsLive);
+  var oldCur = liveRowEl.querySelector('.cursor');
+  if (oldCur) oldCur.remove();
+  if (activeIsLive) appendCursor(liveRowEl);
+  var anchor = box.querySelector('.trow[data-idx="' + lastAmt + '"]');
+  var ref = anchor ? anchor.nextSibling : null;
+  box.insertBefore(liveRuleEl, ref);
+  box.insertBefore(liveRowEl, ref);
+  return true;
+}
+function wireLiveRow(){
+  var inp = liveRowEl.querySelector('input');
+  var amt = liveRowEl.querySelector('.amt');
+  var sign = liveRowEl.querySelector('.sign');
+  function activateLive(){
+    activateLiveRow();
+  }
+  if (amt) amt.addEventListener('click', activateLive);
+  if (sign) sign.addEventListener('click', activateLive);
+  inp.addEventListener('focus', function(){
+    activateLiveRow();
+    enterCommentMode();
+  });
+  inp.addEventListener('input', function(){
+    liveComment = inp.value.replace(/#/g, '').replace(/\s+/g, ' ').trim();
+    saveToLocalStorage();
+  });
+  inp.addEventListener('blur', function(){
+    liveComment = inp.value.replace(/#/g, '').replace(/\s+/g, ' ').trim();
+    saveToLocalStorage();
+    exitCommentMode();
+    renderTape();
+  });
+  inp.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
+  });
+  inp.addEventListener('paste', function(e){
+    var lastAmt = -1;
+    tapeLines.forEach(function(l, i){ if (splitLine(l).kind === 'amount') lastAmt = i; });
+    handleTapePaste(e, lastAmt < 0 ? 0 : lastAmt);
+  });
+}
+/* La fila de total en vivo pasa a ser la activa: el teclado numérico
+   actúa sobre una línea nueva (nunca edita el total) y su comentario
+   se escribe con el teclado del sistema. */
+function activateLiveRow(){
+  activeIsLive = true;
+  replaceNextDigit = false;
+  document.querySelectorAll('#tape-lines .trow').forEach(function(r){ r.classList.remove('active'); });
+  document.querySelectorAll('#tape-lines .cursor').forEach(function(c){ c.remove(); });
+  if (liveRowEl) {
+    liveRowEl.classList.add('active');
+    appendCursor(liveRowEl);
+  }
+  if (keypadTab === 2) { keypadTab = 0; renderKeypad(); }
 }
 
 function startNewLine(){
+  activeIsLive = false;
+  replaceNextDigit = false;
   var last = tapeLines[tapeLines.length - 1];
   if (last && (last.text || '').trim() === '') {
     activeLineIndex = tapeLines.length - 1;
+    pendingSign = '+';
     renderTape();
     return;
   }
@@ -1041,10 +1149,17 @@ function onKeyPress(k){
 }
 
 function digitTargetIndex(){
+  if (activeIsLive) {
+    /* La fila de total en vivo no se edita: los dígitos abren una línea nueva. */
+    tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+    activeIsLive = false;
+    return activeLineIndex;
+  }
   var i = activeLineIndex;
   if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
   var kind = splitLine(tapeLines[i]).kind;
-  if (kind === 'subtotal' || kind === 'text' || kind === 'live') {
+  if (kind === 'subtotal' || kind === 'text') {
     tapeLines.push({ id: lineCounter++, text: '', val: 0 });
     activeLineIndex = tapeLines.length - 1;
     return activeLineIndex;
@@ -1057,6 +1172,18 @@ function pressDigit(d){
   var line = tapeLines[idx];
   var end = numberEnd(line.text);
   var numPart = line.text.slice(0, end);
+  if (replaceNextDigit) {
+    /* Tocar la cantidad de una línea y pulsar un dígito la REEMPLAZA
+       (el comentario se conserva). */
+    replaceNextDigit = false;
+    var part = splitLine(line);
+    var sign = (part.kind === 'amount') ? opFromDisplay(part.sign) : pendingSign;
+    var suffix = line.text.slice(end);
+    line.text = sign + ' ' + d + (suffix ? ' ' + suffix : '');
+    commitEdit('type:' + line.id);
+    renderTape();
+    return;
+  }
   if (numPart.trim() === '' || /^[+\-*/%×÷]$/.test(numPart.trim())) {
     var sign = numPart.trim() || pendingSign;
     line.text = sign + ' ' + d + line.text.slice(end);
@@ -1072,6 +1199,15 @@ function pressDecimal(){
   var line = tapeLines[idx];
   var end = numberEnd(line.text);
   var numPart = line.text.slice(0, end);
+  if (replaceNextDigit) {
+    replaceNextDigit = false;
+    var part = splitLine(line);
+    var sign = (part.kind === 'amount') ? opFromDisplay(part.sign) : pendingSign;
+    line.text = sign + ' 0.' + line.text.slice(end);
+    commitEdit('type:' + line.id);
+    renderTape();
+    return;
+  }
   if (numPart.indexOf('.') >= 0) return;
   if (numPart.trim() === '' || /^[+\-*/%×÷]$/.test(numPart.trim())) {
     var sign = numPart.trim() || pendingSign;
@@ -1085,7 +1221,16 @@ function pressDecimal(){
 
 function pressOperator(op){
   if (op === '%') { applyPercentPostfix(); return; }
+  replaceNextDigit = false;
   pendingSign = op;
+  if (activeIsLive) {
+    activeIsLive = false;
+    tapeLines.push({ id: lineCounter++, text: opDisplay(op) + ' ', val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+    saveHistoryState();
+    renderTape();
+    return;
+  }
   var i = activeLineIndex;
   if (i >= 0 && i < tapeLines.length) {
     var main = splitMainComment(tapeLines[i].text).main;
@@ -1106,7 +1251,9 @@ function pressOperator(op){
    numérica activa ("+ 10" -> "+ 10%"); si la línea está vacía, "% "
    queda como operador para el número que se teclee después. */
 function applyPercentPostfix(){
+  replaceNextDigit = false;
   var i = activeLineIndex;
+  if (activeIsLive) { activeIsLive = false; i = tapeLines.length - 1; }
   if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
   var line = tapeLines[i];
   if (!line) return;
@@ -1140,7 +1287,26 @@ function pressEqual(){
 }
 
 function insertSubtotalLine(){
-  tapeLines.push({ id: lineCounter++, text: '= Total', val: 0, isTotal: true });
+  replaceNextDigit = false;
+  activeIsLive = false;
+  /* Sin duplicados: si la última entrada (sin contar líneas vacías ni
+     operadores pendientes) ya es un subtotal con este mismo total, no
+     hace nada. El comentario escrito en la línea en vivo pasa al
+     subtotal fijo; si no hay, lleva "Total". */
+  recalculateTape();
+  var lastIdx = tapeLines.length - 1;
+  while (lastIdx >= 0) {
+    var t = (tapeLines[lastIdx].text || '').trim();
+    if (t === '' || splitLine(tapeLines[lastIdx]).kind === 'operator') { lastIdx--; continue; }
+    break;
+  }
+  if (lastIdx >= 0) {
+    var lastPart = splitLine(tapeLines[lastIdx]);
+    if (lastPart.kind === 'subtotal' && (tapeLines[lastIdx].val || 0) === runningTotal) return;
+  }
+  var label = liveComment || 'Total';
+  tapeLines.push({ id: lineCounter++, text: '= ' + label, val: 0, isTotal: true });
+  liveComment = '';
   activeLineIndex = tapeLines.length - 1;
   pendingSign = '+';
   saveHistoryState();
@@ -1148,6 +1314,8 @@ function insertSubtotalLine(){
 }
 
 function backspace(){
+  replaceNextDigit = false;
+  if (activeIsLive) return; /* el total en vivo es calculado: no se borra dígito a dígito */
   var i = activeLineIndex;
   if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
   var line = tapeLines[i];
@@ -1181,6 +1349,8 @@ function backspace(){
 }
 
 function clearCurrentLine(){
+  replaceNextDigit = false;
+  activeIsLive = false;
   if (tapeLines.length > 0) {
     tapeLines.pop();
     if (tapeLines.length === 0) tapeLines.push({ id: lineCounter++, text: '', val: 0 });
@@ -1195,6 +1365,9 @@ function clearAll(){
   lineCounter = 2;
   activeLineIndex = 0;
   pendingSign = '+';
+  liveComment = '';
+  activeIsLive = false;
+  replaceNextDigit = false;
   saveHistoryState();
   renderTape();
 }
@@ -1218,8 +1391,6 @@ function updateComment(index, newComment, commit){
     line.text = clean;
   } else if (part.kind === 'subtotal') {
     line.text = '= ' + (clean || 'Total');
-  } else if (part.kind === 'live') {
-    line.text = '~' + (clean ? ' # ' + clean : '');
   } else {
     var main = splitMainComment(line.text).main;
     if (main === '') {
@@ -1244,6 +1415,7 @@ function updateComment(index, newComment, commit){
    esconde. La pestaña ABC = ir al teclado del sistema. */
 function enterCommentMode(){
   commentEditing = true;
+  replaceNextDigit = false;
   document.getElementById('app').classList.add('comment-editing');
   $('keypad').classList.add('kbd-hidden');
   renderKeypad();
@@ -1259,12 +1431,20 @@ function blurActiveInput(){
   if (a && a.blur) a.blur();
 }
 function focusCommentInput(){
+  if (activeIsLive) {
+    var liveInp = $('live-comment-input');
+    if (liveInp) {
+      liveInp.focus();
+      if (liveInp.scrollIntoView) liveInp.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      return;
+    }
+  }
   var idx = activeLineIndex;
   if (idx < 0 || idx >= tapeLines.length) idx = tapeLines.length - 1;
   var inp = document.querySelector('.comment-input[data-idx="' + idx + '"]');
   if (inp) {
     inp.focus();
-    if (inp.scrollIntoView) inp.scrollIntoView({ block: 'nearest' });
+    if (inp.scrollIntoView) inp.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     return;
   }
   startNewLine();
@@ -1445,12 +1625,15 @@ function memoryAction(which){
     return;
   }
   /* M+/M- usa el resultado: el total acumulado. Si está OFF, usa el
-     valor de la línea del cursor (no de la última línea). */
+     valor de la línea del cursor (no de la última línea); si esa línea
+     no tiene número (operador pendiente, subtotal o texto), usa el total
+     acumulado, como hacía la v1.1 cuando la línea en vivo estaba activa. */
   var lastVal = 0;
   if (S.memResult) {
     lastVal = runningTotal;
   } else if (activeLineIndex >= 0 && activeLineIndex < tapeLines.length) {
-    lastVal = tapeLines[activeLineIndex].val || 0;
+    var apart = splitLine(tapeLines[activeLineIndex]);
+    lastVal = (apart.kind === 'amount') ? (tapeLines[activeLineIndex].val || 0) : runningTotal;
   } else if (tapeLines.length > 0) {
     lastVal = tapeLines[tapeLines.length - 1].val || 0;
   }
@@ -1486,7 +1669,9 @@ function undo(){
   if (historyIndex > 0) {
     typingSession = null;
     historyIndex--;
-    tapeLines = JSON.parse(historyStack[historyIndex]);
+    tapeLines = JSON.parse(historyStack[historyIndex]).filter(function(l){ return !(l && l.live); });
+    activeIsLive = false;
+    replaceNextDigit = false;
     if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
     renderTape();
     updateUndoRedoButtons();
@@ -1496,7 +1681,9 @@ function redo(){
   if (historyIndex < historyStack.length - 1) {
     typingSession = null;
     historyIndex++;
-    tapeLines = JSON.parse(historyStack[historyIndex]);
+    tapeLines = JSON.parse(historyStack[historyIndex]).filter(function(l){ return !(l && l.live); });
+    activeIsLive = false;
+    replaceNextDigit = false;
     if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
     renderTape();
     updateUndoRedoButtons();
@@ -1505,16 +1692,38 @@ function redo(){
 
 /* ---------- persistencia local ---------- */
 function saveToLocalStorage(){
-  lsSet('calctape_data', JSON.stringify(tapeLines));
+  /* Formato v1.2: objeto {v, lines, liveComment}; el formato v1.1 (solo
+     el array) se sigue leyendo en loadFromLocalStorage. */
+  lsSet('calctape_data', JSON.stringify({ v: 2, lines: tapeLines, liveComment: liveComment }));
   lsSet('calctape_title', currentTapeTitle);
 }
 function loadFromLocalStorage(){
   var saved = lsGet('calctape_data');
   var savedTitle = lsGet('calctape_title');
+  function stripLiveLines(lines){
+    /* Las pseudo-líneas en vivo de la v1.1 (text '~', live:true) no
+       entran en tapeLines: su comentario pasa a liveComment. */
+    var out = [];
+    lines.forEach(function(l){
+      if (l && l.live) {
+        var c = splitMainComment(l.text || '').comment;
+        if (c) liveComment = c;
+        return;
+      }
+      out.push(l);
+    });
+    return out;
+  }
   if (saved) {
     try {
       var parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) tapeLines = parsed;
+      if (Array.isArray(parsed)) {
+        tapeLines = stripLiveLines(parsed);
+      } else if (parsed && Array.isArray(parsed.lines)) {
+        tapeLines = stripLiveLines(parsed.lines);
+        liveComment = parsed.liveComment || '';
+      }
+      if (!Array.isArray(tapeLines) || tapeLines.length === 0) tapeLines = [{ id: 1, text: '', val: 0 }];
     } catch(e){}
   }
   if (savedTitle) currentTapeTitle = savedTitle;
@@ -1810,7 +2019,10 @@ function loadTapeFromHistory(id){
   var found = null;
   savedHistories.forEach(function(h){ if (h.id === id) found = h; });
   if (!found) return;
-  tapeLines = JSON.parse(JSON.stringify(found.lines));
+  tapeLines = JSON.parse(JSON.stringify(found.lines)).filter(function(l){ return !(l && l.live); });
+  liveComment = '';
+  activeIsLive = false;
+  replaceNextDigit = false;
   currentTapeTitle = found.title;
   currentDocDate = found.date;
   activeLineIndex = (S.cursor === 'first') ? 0 : tapeLines.length - 1;
@@ -1887,6 +2099,9 @@ function newDocument(){
   currentTapeTitle = 'Hoja de trabajo';
   currentDocDate = nowLabel();
   activeLineIndex = 0;
+  liveComment = '';
+  activeIsLive = false;
+  replaceNextDigit = false;
   pendingSign = '+';
   setTitleUI();
   saveHistoryState();
@@ -1906,7 +2121,10 @@ function importBackupFile(file){
     try {
       var data = JSON.parse(reader.result);
       if (!data || !Array.isArray(data.lines)) throw new Error('bad');
-      tapeLines = data.lines;
+      tapeLines = data.lines.filter(function(l){ return !(l && l.live); });
+      liveComment = '';
+      activeIsLive = false;
+      replaceNextDigit = false;
       if (data.title) currentTapeTitle = data.title;
       if (Array.isArray(data.history)) savedHistories = data.history;
       currentDocDate = nowLabel();
@@ -1960,7 +2178,6 @@ function downloadText(content, filename, mime){
 function tapePlainText(line){
   var part = splitLine(line);
   if (part.kind === 'subtotal') return '+ ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
-  if (part.kind === 'live') return (part.sign === '-' ? '-' : '+') + ' ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
   if (part.kind === 'amount') return opDisplay(part.sign) + ' ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
   if (part.kind === 'operator') return opDisplay(part.sign);
   return part.text || '';
@@ -1977,7 +2194,7 @@ function tapeTextExport(){
 function tapeHtmlExport(){
   var rows = tapeLines.map(function(line){
     var part = splitLine(line);
-    var cls = (part.kind === 'subtotal' || part.kind === 'live') ? 'sub' : ((part.kind === 'amount' && signedAmountFor(part) < 0) ? 'neg' : '');
+    var cls = (part.kind === 'subtotal') ? 'sub' : ((part.kind === 'amount' && signedAmountFor(part) < 0) ? 'neg' : '');
     return '<tr><td class="' + cls + '">' + escapeHtml(tapePlainText(line)) + '</td></tr>';
   }).join('');
   return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + escapeHtml(currentTapeTitle) + '</title>' +
