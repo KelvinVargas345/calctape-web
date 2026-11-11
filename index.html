@@ -98,6 +98,11 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
   .valuebar{padding:6px 4px; gap:1px;}
 }
 .vb-copy{color:var(--accent);}
+/* Botón de copiar en la línea seleccionada (v1.3, página original):
+   icono pequeño tras la cantidad, solo en la fila activa. */
+.row-copy{flex:none; width:24px; height:24px; margin:0 1px; padding:0; color:var(--muted); display:flex; align-items:center; justify-content:center; border-radius:6px; align-self:center;}
+.row-copy:hover{background:var(--input-bg); color:var(--accent);}
+.row-copy svg{width:15px; height:15px;}
 
 /* ---------- Keypad ---------- */
 .keypad{flex:none; background:var(--tape-bg); padding:3px 3px calc(3px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:2px;}
@@ -377,6 +382,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
     <div class="modal-body">
       <p><b>1.</b> La cinta tiene <b>dos columnas</b>: a la izquierda el c&aacute;lculo (signo + cantidad) y a la derecha el comentario, con un espacio claro entre ambas.</p>
       <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). Despu&eacute;s de cada entrada la cinta muestra en verde el total acumulado. <b>=/&#9166;</b> inserta un subtotal fijo en verde; el &uacute;ltimo subtotal lleva doble raya.</p>
+      <p><b>2b.</b> <b>Bloques independientes</b>: si escribes una l&iacute;nea de texto (por ejemplo un t&iacute;tulo de secci&oacute;n) despu&eacute;s del total en vivo, el total se congela en verde y el bloque siguiente calcula desde 0. La barra de valor muestra siempre el total del bloque actual.</p>
       <p><b>3.</b> Toca la <b>cantidad</b> de una l&iacute;nea para editar su n&uacute;mero con el teclado (el primer d&iacute;gito la reemplaza). El comentario se escribe con el <b>teclado del sistema</b>: toca el comentario o la pesta&ntilde;a <b>ABC</b> y escribe con Gboard; mientras escribes, el teclado num&eacute;rico se esconde. Toca <b>K1</b> para volver a los n&uacute;meros.</p>
       <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal) y <b>NAV</b> navega por la cinta. Desliza el teclado a los lados para cambiar de zona. El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
       <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
@@ -398,6 +404,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p><b>CalcTape Web 1.1</b></p>
       <p>Calculadora con cinta de papel. Funciona sin conexi&oacute;n y guarda tus cintas e historial en este dispositivo.</p>
       <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, comentarios con el teclado del sistema, total en vivo, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
+      <p style="color:var(--muted); font-size:12px;">Versi&oacute;n 1.3: bloques de c&aacute;lculo independientes, l&iacute;neas de ejemplo en la primera apertura y bot&oacute;n de copiar en la l&iacute;nea seleccionada.</p>
       <button class="btn-primary" data-close="modal-info">Cerrar</button>
     </div>
   </div>
@@ -454,7 +461,11 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <button class="icon-btn" data-close="modal-news" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p><b>CalcTape Web 1.2 &mdash; Novedades</b></p>
+      <p><b>CalcTape Web 1.3 &mdash; Novedades</b></p>
+      <p>&bull; <b>Bloques de c&aacute;lculo independientes</b>: una l&iacute;nea de texto escrita tras el total en vivo congela el total en verde y el bloque siguiente calcula desde 0, como en la CalcTape original. La barra de valor muestra el total del bloque actual.</p>
+      <p>&bull; <b>L&iacute;neas de ejemplo en la primera apertura</b>: +255.50, &minus;66.00 y +33.70 con el total 223.20, como en la original.</p>
+      <p>&bull; <b>Bot&oacute;n de copiar en la l&iacute;nea seleccionada</b>: toca la cantidad de una l&iacute;nea y pulsa el icono de copiar junto a ella para copiar su valor.</p>
+      <p>&bull; <b>Escritura con el teclado del sistema en cualquier l&iacute;nea</b>: &laquo;500&raquo; crea una l&iacute;nea de importe, &laquo;* 80&raquo; multiplica y &laquo;&minus;600&raquo; resta; el total se actualiza mientras escribes.</p>
       <p>&bull; <b>Tema claro (Crisp Azure) por defecto</b>, como la app original; el icono de la barra cambia a oscuro.</p>
       <p>&bull; <b>Comentarios con el teclado del sistema</b>: toca una l&iacute;nea o la pesta&ntilde;a ABC y escribe con Gboard; el teclado num&eacute;rico se esconde mientras escribes.</p>
       <p>&bull; <b>Total en vivo en verde</b>: despu&eacute;s de cada entrada la cinta muestra el total acumulado.</p>
@@ -514,10 +525,34 @@ var savedHistories = [];
 var historyStack = [];
 var historyIndex = -1;
 var runningTotal = 0;
+var definedVarNames = {};
+/* Nombres de variables definidos en la cinta (líneas "nombre = valor"):
+   los calcula recalculateTape() en cada recálculo. Una línea de solo
+   letras que NO es una variable definida es una línea de TEXTO (v1.3,
+   página original: "Hola", "hoja"), no una referencia a variable. */
+/* BLOQUES INDEPENDIENTES (v1.3, página original): la cinta se divide
+   en bloques separados por subtotales congelados. runningTotal es ya el
+   total del BLOQUE ACTUAL (se reinicia a 0 tras cada subtotal);
+   blockHasAmount dice si el bloque actual tiene alguna entrada;
+   lastSubtotalValue / hasSubtotal guardan el último total congelado.
+   displayTotal() es lo que muestra la barra de valor: el total del
+   bloque actual si tiene entradas, el último subtotal congelado si el
+   bloque está vacío, 0 al principio. */
+var blockHasAmount = false;
+var lastSubtotalValue = 0;
+var hasSubtotal = false;
+function displayTotal(){
+  if (blockHasAmount) return runningTotal;
+  if (hasSubtotal) return lastSubtotalValue;
+  return 0;
+}
+/* SVG de copiar (el mismo de la barra de valor), reutilizado para el
+   botón de copiar de la línea seleccionada. */
+var COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 /* Total en vivo ATÓMICO (v1.2): la línea de total en vivo NO es una
    entrada de tapeLines. Es un nodo DOM estable (#live-total-row) que
    se actualiza en su sitio y nunca se cuenta en la suma; la barra de
-   valor y la línea muestran el mismo runningTotal calculado una vez. */
+   valor y la línea muestran el mismo displayTotal() calculado una vez. */
 var liveComment = '';
 var activeIsLive = false;
 var replaceNextDigit = false;
@@ -572,10 +607,24 @@ function roundTotal(v){
   return Math.round(v * f) / f;
 }
 
-/* ---------- recálculo de la cinta (motor verificado) ---------- */
+/* ---------- recálculo de la cinta (motor verificado) ----------
+   Bloques independientes (v1.3): tras cada línea de subtotal (=) el
+   total se reinicia a 0: las entradas siguientes forman un bloque
+   nuevo que calcula desde 0, como en la página original. */
 function recalculateTape(){
   var total = 0;
   var variables = {};
+  blockHasAmount = false;
+  lastSubtotalValue = 0;
+  hasSubtotal = false;
+  /* Pre-paso: nombres de variables definidos en toda la cinta, para
+     clasificar las líneas de solo letras (ver splitLine). */
+  definedVarNames = {};
+  tapeLines.forEach(function(line){
+    var t = (line.text || '').trim();
+    var mm = t.match(/^([A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_ ]*)=\s*-?[\d.,]/);
+    if (mm) definedVarNames[mm[1].trim()] = true;
+  });
   tapeLines.forEach(function(line){
     var text = (line.text || '').trim();
     if (text.indexOf('=') >= 0) {
@@ -607,6 +656,12 @@ function recalculateTape(){
     if (op === '=') {
       line.val = total;
       line.isTotal = true;
+      /* El subtotal congela el total del bloque y cierra el bloque:
+         el siguiente bloque calcula desde 0. */
+      lastSubtotalValue = total;
+      hasSubtotal = true;
+      total = 0;
+      blockHasAmount = false;
     } else {
       line.isTotal = false;
       if (!isNaN(num)) {
@@ -617,6 +672,7 @@ function recalculateTape(){
         else if (op === '/') { if (num !== 0) total /= num; }
         total = roundTotal(total);
         line.val = num;
+        blockHasAmount = true;
       } else {
         line.val = 0;
       }
@@ -645,19 +701,31 @@ function splitLine(line){
   var main = mc.main, comment = mc.comment;
   if (main.charAt(0) === '=') {
     var rest = main.slice(1).trim();
-    var label = comment || (rest && !isNumericText(rest) ? rest : 'Total');
+    /* line.label guarda la etiqueta elegida al congelar el subtotal:
+       el subtotal congelado tras una línea de texto (o las líneas de
+       ejemplo) lleva la etiqueta VACÍA, no "Total" (v1.3, original). */
+    var label = (line.label !== undefined) ? line.label : (comment || (rest && !isNumericText(rest) ? rest : 'Total'));
     return { kind:'subtotal', sign:'+', amount: line.val, comment: label };
   }
   if (/^[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_ ]*=\s*-?[\d.,]/.test(main)) {
     return { kind:'text', text: raw };
   }
   var sign = '+', numText = main;
-  var m = main.match(/^([+\-*/%×÷])\s*(.*)$/);
-  if (m) { sign = m[1]; numText = (m[2] || '').trim(); }
+  /* '−' (U+2212, el menos del teclado del sistema) cuenta como operador
+     de resta, igual que '-'; '*' se muestra como '×' y '/' como '÷'
+     (página original: "* 80" se ve "× 80.00"). */
+  var m = main.match(/^([+\-*/%×÷−])\s*(.*)$/);
+  if (m) { sign = opDisplay(opFromDisplay(m[1])); numText = (m[2] || '').trim(); }
   if (numText === '') return { kind:'operator', sign: sign, comment: comment };
   if (isNumericText(numText)) return { kind:'amount', sign: sign, amount: line.val, comment: comment };
   if (/^[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_ ]*$/.test(numText)) {
-    return { kind:'amount', sign: sign, amount: line.val, comment: comment, varName: numText };
+    /* Una línea de solo letras es una referencia a variable SOLO si el
+       nombre está definido en la cinta ("precio = 100"); si no, es una
+       línea de texto ("Hola", "hoja") que cierra el bloque (v1.3). */
+    if (definedVarNames[numText]) {
+      return { kind:'amount', sign: sign, amount: line.val, comment: comment, varName: numText };
+    }
+    return { kind:'text', text: raw };
   }
   return { kind:'text', text: raw };
 }
@@ -710,9 +778,13 @@ function renderTape(){
       var row = document.createElement('div');
       row.className = 'trow' + (index === activeLineIndex ? ' active' : '');
       row.dataset.idx = index;
+      /* Un subtotal negativo se muestra en rojo con signo − (como la
+         línea "a favor" de la original); el positivo, en verde. */
+      var subNeg = (part.amount || 0) < 0;
       row.innerHTML =
-        '<span class="sign">+</span>' +
-        '<span class="amt sub">' + escapeHtml(formatNumber(part.amount)) + '</span>' +
+        '<span class="sign">' + (subNeg ? '-' : '+') + '</span>' +
+        '<span class="amt' + (subNeg ? ' neg' : ' sub') + '">' + escapeHtml(formatNumber(Math.abs(part.amount || 0))) + '</span>' +
+        (index === activeLineIndex ? '<button type="button" class="row-copy" data-copy-idx="' + index + '" title="Copiar el valor de esta línea" aria-label="Copiar el valor de esta línea">' + COPY_SVG + '</button>' : '') +
         '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
       if (index === activeLineIndex) appendCursor(row);
       box.appendChild(row);
@@ -748,6 +820,7 @@ function renderTape(){
     arow.innerHTML =
       '<span class="sign">' + escapeHtml(part.sign) + '</span>' +
       '<span class="amt' + (neg ? ' neg' : '') + '">' + escapeHtml(formatNumber(amt)) + '</span>' +
+      (index === activeLineIndex ? '<button type="button" class="row-copy" data-copy-idx="' + index + '" title="Copiar el valor de esta línea" aria-label="Copiar el valor de esta línea">' + COPY_SVG + '</button>' : '') +
       '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
     if (index === activeLineIndex) appendCursor(arow);
     box.appendChild(arow);
@@ -757,7 +830,7 @@ function renderTape(){
      con regla simple, justo tras la última entrada numérica. El nodo se
      REUTILIZA entre renders: solo se actualiza su texto y se mueve a su
      sitio; nunca se destruye y se vuelve a crear, así no hay duplicados
-     ni valores transitorios. Su valor es el mismo runningTotal de la barra. */
+     ni valores transitorios. Su valor es el mismo displayTotal() de la barra. */
   positionLiveRow(box);
 
   /* La original NO añade una fila final "a favor": el último total en vivo
@@ -774,7 +847,7 @@ function renderTape(){
     box.appendChild(ph);
   }
 
-  $('vb-total').textContent = formatNumber(runningTotal);
+  $('vb-total').textContent = formatNumber(displayTotal());
   $('vb-sign').innerHTML = '&quot;' + escapeHtml(pendingSign) + '&quot;';
   updateUndoRedoButtons();
   saveToLocalStorage();
@@ -834,6 +907,15 @@ function wireTapeRows(){
     row.addEventListener('touchend', function(){ if (pressTimer) clearTimeout(pressTimer); });
     row.addEventListener('touchmove', function(){ if (pressTimer) clearTimeout(pressTimer); });
   });
+  /* Botón de copiar de la fila activa (v1.3): copia el valor de esa
+     línea; el de la barra de valor sigue copiando el total. */
+  document.querySelectorAll('#tape-lines .row-copy').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var idx = parseInt(btn.getAttribute('data-copy-idx'), 10);
+      copyLineValue(idx);
+    });
+  });
   var inputs = document.querySelectorAll('.comment-input');
   inputs.forEach(function(inp){
     if (inp.id === 'live-comment-input') return; /* la fila en vivo tiene su propio cableado */
@@ -844,8 +926,11 @@ function wireTapeRows(){
         var line = tapeLines[idx]; if (!line) return;
         line.text = inp.value;
         saveToLocalStorage();
+        /* Total en vivo mientras se teclea (v1.3): "500" ya suma 500,
+           "* 80" ya multiplica y "−600" ya resta, antes de confirmar. */
+        refreshTotalsLive();
       });
-      inp.addEventListener('blur', function(){ saveHistoryState(); exitCommentMode(); renderTape(); });
+      inp.addEventListener('blur', function(){ maybeFreezeLiveTotal(idx); saveHistoryState(); exitCommentMode(); renderTape(); });
       inp.addEventListener('keydown', function(e){
         if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
       });
@@ -858,6 +943,10 @@ function wireTapeRows(){
     });
     inp.addEventListener('input', function(){
       updateComment(idx, inp.value, false);
+      /* Total en vivo mientras se teclea (v1.3): en una línea nueva y
+         vacía, "500" ya suma 500 y "* 80" ya multiplica antes de
+         confirmar; en un comentario normal no cambia nada. */
+      refreshTotalsLive();
     });
     inp.addEventListener('blur', function(){
       updateComment(idx, inp.value, true);
@@ -927,6 +1016,16 @@ function positionLiveRow(box){
     var next = tapeLines[lastAmt + 1];
     show = !(next && splitLine(next).kind === 'subtotal');
   }
+  /* Mientras se teclea el texto de una línea (input de línea de texto
+     enfocado), el total solo está en la barra de valor: la cinta no
+     muestra aún la fila verde tras la línea en edición (página
+     original: mientras se teclea "* 80" no hay línea verde en la cinta;
+     al confirmar la línea, aparece). Al escribir un comentario la fila
+     sí se ve. */
+  if (show && document.activeElement && document.activeElement.classList &&
+      document.activeElement.classList.contains('text-line-input')) {
+    show = false;
+  }
   if (!show) {
     if (liveRuleEl && liveRuleEl.parentNode) liveRuleEl.parentNode.removeChild(liveRuleEl);
     if (liveRowEl && liveRowEl.parentNode) liveRowEl.parentNode.removeChild(liveRowEl);
@@ -934,7 +1033,7 @@ function positionLiveRow(box){
     return false;
   }
   ensureLiveRowEls();
-  var total = runningTotal;
+  var total = displayTotal();
   var signEl = liveRowEl.querySelector('.sign');
   var amtEl = liveRowEl.querySelector('.amt');
   signEl.textContent = total < 0 ? '-' : '+';
@@ -952,6 +1051,18 @@ function positionLiveRow(box){
   box.insertBefore(liveRuleEl, ref);
   box.insertBefore(liveRowEl, ref);
   return true;
+}
+/* Recálculo ligero mientras se teclea en una línea de texto (v1.3):
+   actualiza la barra de valor y la fila en vivo en su sitio SIN
+   reconstruir la cinta: no se pierde el foco ni se mueve el cursor.
+   La fila en vivo queda oculta mientras la línea de texto está
+   enfocada (ver positionLiveRow) y aparece al confirmar la línea. */
+function refreshTotalsLive(){
+  recalculateTape();
+  var vt = $('vb-total');
+  if (vt) vt.textContent = formatNumber(displayTotal());
+  var box = $('tape-lines');
+  if (box) positionLiveRow(box);
 }
 function wireLiveRow(){
   var inp = liveRowEl.querySelector('input');
@@ -1141,7 +1252,7 @@ function onKeyPress(k){
     case 'pow2': transformActiveLine(function(v){ return v * v; }); break;
     case 'sqrt': transformActiveLine(function(v){ return v < 0 ? NaN : Math.sqrt(v); }); break;
     case 'recip': transformActiveLine(function(v){ return v === 0 ? NaN : 1 / v; }); break;
-    case 'ans': insertConstLine(runningTotal); break;
+    case 'ans': insertConstLine(displayTotal()); break;
     case 'const': insertConstLine(k.v); break;
     case 'negate': negateActiveLine(); break;
     case 'nav': navAction(k.v); break;
@@ -1286,13 +1397,52 @@ function pressEqual(){
   insertSubtotalLine();
 }
 
+/* Congelar el total en vivo (v1.3, página original): una línea de
+   texto confirmada DESPUÉS del total en vivo cierra el bloque. El
+   total en vivo se convierte en un subtotal verde fijo sin comentario
+   (salvo el escrito en la fila en vivo, que pasa como etiqueta) y el
+   bloque siguiente calcula desde 0. No hace nada si no hay entradas,
+   si el bloque ya está cerrado por un subtotal, o si la línea
+   confirmada está antes de la última entrada. */
+function maybeFreezeLiveTotal(committedIdx){
+  if (committedIdx === undefined || committedIdx < 0 || committedIdx >= tapeLines.length) return false;
+  if (splitLine(tapeLines[committedIdx]).kind !== 'text') return false;
+  var lastAmt = -1;
+  tapeLines.forEach(function(l, i){ if (splitLine(l).kind === 'amount') lastAmt = i; });
+  if (lastAmt < 0) return false;
+  if (committedIdx <= lastAmt) return false;
+  var next = tapeLines[lastAmt + 1];
+  if (next && splitLine(next).kind === 'subtotal') return false;
+  recalculateTape();
+  var label = liveComment || '';
+  tapeLines.splice(lastAmt + 1, 0, { id: lineCounter++, text: '= ' + label, val: runningTotal, isTotal: true, label: label });
+  liveComment = '';
+  return true;
+}
+
+/* Copiar el valor de una línea (v1.3): la de importe o subtotal
+   seleccionada muestra un icono de copiar junto a su cantidad. */
+function copyLineValue(idx){
+  var line = tapeLines[idx];
+  if (!line) return;
+  var part = splitLine(line);
+  var text = formatNumber(signedAmountFor(part));
+  function done(){ showToast('Valor copiado: ' + text); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+  } else {
+    fallbackCopy(text); done();
+  }
+}
+
 function insertSubtotalLine(){
   replaceNextDigit = false;
   activeIsLive = false;
   /* Sin duplicados: si la última entrada (sin contar líneas vacías ni
-     operadores pendientes) ya es un subtotal con este mismo total, no
-     hace nada. El comentario escrito en la línea en vivo pasa al
-     subtotal fijo; si no hay, lleva "Total". */
+     operadores pendientes) ya es un subtotal y el bloque actual está
+     vacío —o tiene ese mismo total— no hace nada. El comentario
+     escrito en la línea en vivo pasa al subtotal fijo; si no hay,
+     lleva "Total". */
   recalculateTape();
   var lastIdx = tapeLines.length - 1;
   while (lastIdx >= 0) {
@@ -1302,10 +1452,10 @@ function insertSubtotalLine(){
   }
   if (lastIdx >= 0) {
     var lastPart = splitLine(tapeLines[lastIdx]);
-    if (lastPart.kind === 'subtotal' && (tapeLines[lastIdx].val || 0) === runningTotal) return;
+    if (lastPart.kind === 'subtotal' && (!blockHasAmount || (tapeLines[lastIdx].val || 0) === runningTotal)) return;
   }
   var label = liveComment || 'Total';
-  tapeLines.push({ id: lineCounter++, text: '= ' + label, val: 0, isTotal: true });
+  tapeLines.push({ id: lineCounter++, text: '= ' + label, val: 0, isTotal: true, label: label });
   liveComment = '';
   activeLineIndex = tapeLines.length - 1;
   pendingSign = '+';
@@ -1391,6 +1541,7 @@ function updateComment(index, newComment, commit){
     line.text = clean;
   } else if (part.kind === 'subtotal') {
     line.text = '= ' + (clean || 'Total');
+    line.label = clean; /* la etiqueta vacía se respeta (v1.3) */
   } else {
     var main = splitMainComment(line.text).main;
     if (main === '') {
@@ -1399,7 +1550,15 @@ function updateComment(index, newComment, commit){
       line.text = main + (clean ? ' # ' + clean : '');
     }
   }
+  var frozen = false;
   if (commit) {
+    /* Una línea de texto confirmada tras el total en vivo cierra el
+       bloque (v1.3): el total se congela y el bloque nuevo calcula
+       desde 0. La línea confirmada avanza un puesto (el subtotal
+       congelado se inserta antes que ella), y la confirmación queda
+       en el historial con el congelado incluido. */
+    frozen = maybeFreezeLiveTotal(index);
+    if (frozen) index++;
     saveHistoryState();
     renderTape();
   } else {
@@ -1511,12 +1670,13 @@ function negateActiveLine(){
   var part = splitLine(line);
   if (part.kind !== 'amount') return;
   var mc = splitMainComment(line.text);
-  var m = mc.main.match(/^([+\-*/%×÷])\s*(.*)$/);
+  var m = mc.main.match(/^([+\-*/%×÷−])\s*(.*)$/);
   if (!m) return;
   var op = m[1], rest = (m[2] || '').trim();
+  var opN = opFromDisplay(op);
   var suffix = mc.comment ? ' # ' + mc.comment : '';
-  if (op === '+' || op === '-') {
-    line.text = (op === '-' ? '+' : '-') + ' ' + rest + suffix;
+  if (opN === '+' || opN === '-') {
+    line.text = (opN === '-' ? '+' : '-') + ' ' + rest + suffix;
   } else {
     line.text = op + ' ' + (rest.charAt(0) === '-' ? rest.slice(1) : '-' + rest) + suffix;
   }
@@ -1630,10 +1790,10 @@ function memoryAction(which){
      acumulado, como hacía la v1.1 cuando la línea en vivo estaba activa. */
   var lastVal = 0;
   if (S.memResult) {
-    lastVal = runningTotal;
+    lastVal = displayTotal();
   } else if (activeLineIndex >= 0 && activeLineIndex < tapeLines.length) {
     var apart = splitLine(tapeLines[activeLineIndex]);
-    lastVal = (apart.kind === 'amount') ? (tapeLines[activeLineIndex].val || 0) : runningTotal;
+    lastVal = (apart.kind === 'amount') ? (tapeLines[activeLineIndex].val || 0) : displayTotal();
   } else if (tapeLines.length > 0) {
     lastVal = tapeLines[tapeLines.length - 1].val || 0;
   }
@@ -1726,10 +1886,33 @@ function loadFromLocalStorage(){
       if (!Array.isArray(tapeLines) || tapeLines.length === 0) tapeLines = [{ id: 1, text: '', val: 0 }];
     } catch(e){}
   }
+  if (!saved) {
+    /* Primera apertura (v1.3, página original): sin ninguna cinta
+       guardada en localStorage, la cinta arranca con las líneas de
+       ejemplo de la original. Nunca se sobrescriben los datos del
+       usuario: esto solo ocurre si no hay cinta guardada en absoluto. */
+    seedDemoLines();
+  }
   if (savedTitle) currentTapeTitle = savedTitle;
   var maxId = 0;
   tapeLines.forEach(function(l){ if (l.id > maxId) maxId = l.id; });
   lineCounter = maxId + 1;
+}
+/* Líneas de ejemplo de la primera apertura (v1.3): las mismas que
+   muestra la página original al abrirla por primera vez, con el
+   subtotal 223.20 ya congelado (sin comentario, como en la original)
+   y la línea del subtotal seleccionada. */
+function seedDemoLines(){
+  tapeLines = [
+    { id: 1, text: '+ 255.50 # Cambia este número', val: 255.50 },
+    { id: 2, text: '- 66.00', val: 66 },
+    { id: 3, text: '+ 33.70 # Los comentarios van aquí', val: 33.70 },
+    { id: 4, text: '= ', val: 223.20, isTotal: true, label: '' }
+  ];
+  lineCounter = 5;
+  activeLineIndex = tapeLines.length - 1;
+  pendingSign = '+';
+  liveComment = '';
 }
 var THEMES = {
   azure: { label: 'Crisp Azure', accent: '#2F9BE8' },
@@ -1992,7 +2175,7 @@ function saveHistoriesToCache(){
   renderHistoryList();
 }
 function saveCurrentTapeToHistory(askName){
-  var totalVal = formatNumber(runningTotal);
+  var totalVal = formatNumber(displayTotal());
   var defName = currentTapeTitle !== 'Hoja de trabajo'
     ? currentTapeTitle
     : ('Cinta (' + new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' }) + ')');
@@ -2177,7 +2360,10 @@ function downloadText(content, filename, mime){
 /* ---------- líneas de la cinta en texto plano ---------- */
 function tapePlainText(line){
   var part = splitLine(line);
-  if (part.kind === 'subtotal') return '+ ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
+  if (part.kind === 'subtotal') {
+    var neg = (part.amount || 0) < 0;
+    return (neg ? '- ' : '+ ') + formatNumber(Math.abs(part.amount || 0)) + (part.comment ? ' ' + part.comment : '');
+  }
   if (part.kind === 'amount') return opDisplay(part.sign) + ' ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
   if (part.kind === 'operator') return opDisplay(part.sign);
   return part.text || '';
@@ -2188,7 +2374,7 @@ function tapeDisplayLines(){
 function tapeTextExport(){
   var content = 'CalcTape Export - ' + currentTapeTitle + '\n=====================\n\n';
   tapeDisplayLines().forEach(function(t, idx){ content += (idx + 1) + '. ' + t + '\n'; });
-  content += '\n=====================\nTOTAL: ' + formatNumber(runningTotal) + '\n';
+  content += '\n=====================\nTOTAL: ' + formatNumber(displayTotal()) + '\n';
   return content;
 }
 function tapeHtmlExport(){
@@ -2200,7 +2386,7 @@ function tapeHtmlExport(){
   return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + escapeHtml(currentTapeTitle) + '</title>' +
     '<style>body{font-family:monospace} .sub{color:#16A34A;font-weight:bold} .neg{color:#DC2626}</style></head>' +
     '<body><h2>' + escapeHtml(currentTapeTitle) + '</h2><table>' + rows + '</table>' +
-    '<p><b>TOTAL: ' + escapeHtml(formatNumber(runningTotal)) + '</b></p></body></html>';
+    '<p><b>TOTAL: ' + escapeHtml(formatNumber(displayTotal())) + '</b></p></body></html>';
 }
 function shareTape(){
   var content = tapeTextExport();
@@ -2235,7 +2421,7 @@ function exportTxt(){
   showToast('Cinta exportada como TXT');
 }
 function copyTotal(){
-  var text = formatNumber(runningTotal);
+  var text = formatNumber(displayTotal());
   function done(){ showToast('Total copiado: ' + text); }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
