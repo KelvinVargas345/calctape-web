@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1824">
+<meta name="application-name" content="CalcTape">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CalcTape">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CalcTape — Calculadora con cinta</title>
+<style>
+:root{
+  --tape-bg:#0E1824; --topbar-bg:#1A2634; --valuebar-bg:#182533; --drawer-bg:#0F1D2B;
+  --card-bg:#3A4B5C; --accent:#2F9BE8; --text:#E9EFF5; --muted:#8B9CA9;
+  --green:#3ECF6E; --red:#F0564A; --key-digit:#1E2B3A; --key-op:#27394C; --key-back:#2C3E50;
+  --divider:#26374A; --danger:#EA7C28; --disabled:#4A5A6A; --active-bg:rgba(47,155,232,.12);
+  --rule:#7C8DA0; --modal-bg:#1A2634; --input-bg:rgba(255,255,255,.06);
+}
+[data-theme="light"]{
+  --tape-bg:#FDFBF7; --topbar-bg:#FFFFFF; --valuebar-bg:#F1F5F9; --drawer-bg:#FFFFFF;
+  --card-bg:#E8EEF4; --accent:#2563EB; --text:#1F2937; --muted:#6B7280;
+  --green:#059669; --red:#DC2626; --key-digit:#FFFFFF; --key-op:#DCE6F2; --key-back:#8FA5B8;
+  --divider:#D5DCE3; --danger:#EA7C28; --disabled:#9CA3AF; --active-bg:rgba(59,130,246,.08);
+  --rule:#9AA7B4; --modal-bg:#FFFFFF; --input-bg:rgba(0,0,0,.05);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--tape-bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+button{font-family:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0;}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+.hidden{display:none !important;}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;}
+
+.app{width:100%; max-width:520px; margin:0 auto; height:100dvh; display:flex; flex-direction:column; background:var(--tape-bg); position:relative;}
+
+/* ---------- Top bar ---------- */
+.topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:relative; z-index:30;}
+.icon-btn{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--text); flex:none;}
+.icon-btn:hover{background:var(--input-bg);}
+.icon-btn svg{width:22px; height:22px;}
+.icon-btn.accent{color:var(--accent);}
+.title-btn{flex:1; min-width:0; text-align:left; font-size:17px; font-weight:600; color:var(--text); padding:8px 6px; border-radius:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.title-btn:hover{background:var(--input-bg);}
+.free-badge{color:var(--accent); font-size:14px; font-weight:600; padding:0 4px; white-space:nowrap;}
+.menu{position:absolute; top:52px; right:4px; background:var(--modal-bg); border:1px solid var(--divider); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:210px; padding:4px; z-index:80;}
+.menu button{display:block; width:100%; text-align:left; padding:10px 12px; font-size:15px; border-radius:6px; color:var(--text);}
+.menu button:hover{background:var(--input-bg);}
+
+/* ---------- Tape ---------- */
+.tape-wrap{flex:1; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 16px; cursor:default;}
+.tape-lines{font-size:16px;}
+.trow{display:flex; align-items:baseline; padding:4px 10px 4px 8px; border-left:3px solid transparent; min-height:28px;}
+.trow.active{background:var(--active-bg); border-left-color:var(--accent);}
+.trow .sign{width:22px; flex:none; text-align:center; color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:16px;}
+.trow .amt{width:132px; flex:none; text-align:right; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; color:var(--text); overflow:hidden; white-space:nowrap;}
+.trow .amt.neg{color:var(--red);}
+.trow .amt.sub{color:var(--green); font-weight:700;}
+.trow .cmt{flex:1; min-width:0; padding-left:20px; color:var(--muted); font-size:15px; display:flex; align-items:baseline; gap:2px;}
+.trow .cmt input{flex:1; min-width:0; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
+.trow .cmt input:focus{color:var(--text);}
+.trow.text-row{color:var(--muted); font-size:15px; padding-left:10px; word-break:break-word;}
+.trow.text-row.active{color:var(--text);}
+.cursor{color:var(--accent); font-weight:700; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.rule{width:154px; margin:3px 0 1px 8px; border-top:1px solid var(--rule);}
+.rule-double{width:154px; margin:3px 0 1px 8px; height:3px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);}
+.phantom{opacity:.7;}
+
+/* ---------- Value bar ---------- */
+.valuebar{flex:none; background:var(--valuebar-bg); border-top:1px solid var(--divider); display:flex; align-items:center; gap:2px; padding:6px 8px;}
+.vb-btn{min-width:44px; height:36px; padding:0 8px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:16px; font-weight:600; color:var(--text);}
+.vb-btn:hover{background:var(--input-bg);}
+.vb-btn.tab{color:var(--accent);}
+.vb-btn.tab.off{color:var(--muted);}
+.vb-btn:disabled{color:var(--disabled);}
+.vb-sign{font-size:16px; color:var(--text); padding:0 4px;}
+.vb-total{margin-left:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:19px; font-weight:700; color:var(--text); padding:0 6px; white-space:nowrap;}
+.vb-copy{color:var(--accent);}
+
+/* ---------- Keypad ---------- */
+.keypad{flex:none; background:var(--tape-bg); padding:3px 3px calc(3px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:2px;}
+.krow{display:flex; gap:2px;}
+.key{flex:1 1 0; min-width:0; height:52px; border-radius:8px; background:var(--key-digit); color:var(--text); font-size:20px; font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1.05; text-align:center; padding:0 2px; user-select:none; -webkit-user-select:none; touch-action:manipulation;}
+.key:active{transform:scale(.96); filter:brightness(1.25);}
+.key.op{background:var(--key-op);}
+.key.fn{background:var(--key-op); color:var(--accent); font-size:16px;}
+.key.fn-small{background:var(--key-op); color:var(--accent); font-size:11px; font-weight:700;}
+.key.danger{background:var(--danger); color:#fff;}
+.key.back{background:var(--key-back); font-size:20px;}
+.key.abc{font-size:17px;}
+.key.shift-on{background:var(--danger); color:#fff;}
+
+/* ---------- Drawer ---------- */
+.scrim{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:55;}
+.drawer{position:fixed; top:0; left:0; bottom:0; width:min(320px,86vw); background:var(--drawer-bg); z-index:60; display:flex; flex-direction:column; transform:translateX(-102%); transition:transform .25s ease; box-shadow:4px 0 24px rgba(0,0,0,.4);}
+.drawer.open{transform:none;}
+.drawer-head{flex:none; display:flex; align-items:center; justify-content:space-between; padding:16px 16px 10px;}
+.drawer-head h2{margin:0; font-size:20px; font-weight:600;}
+.drawer-body{flex:1; overflow-y:auto; padding:0 12px 16px;}
+.doc-card{background:var(--card-bg); border-radius:12px; padding:12px 14px; margin-bottom:10px; position:relative; cursor:pointer;}
+.doc-card.current{outline:2px solid var(--accent);}
+.doc-card-title{font-style:italic; font-weight:700; font-size:16px;}
+.doc-card-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+.doc-card-ic{position:absolute; right:12px; top:12px; color:var(--muted); opacity:.7;}
+.doc-card-ic svg{width:22px; height:22px;}
+.drawer-hr{border:0; border-top:1px solid var(--divider); margin:12px 0;}
+.drawer-row{display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 8px; font-size:15px; border-radius:8px;}
+.drawer-row:hover{background:var(--input-bg);}
+.drawer-row svg{width:22px; height:22px; color:var(--accent); flex:none;}
+.drawer-row .chev{margin-left:auto; color:var(--accent); font-size:13px;}
+.backup-box{padding:2px 8px 6px 42px; display:flex; flex-direction:column; gap:6px;}
+.backup-box button{text-align:left; font-size:14px; color:var(--accent); padding:8px 10px; border:1px solid var(--divider); border-radius:8px;}
+.hist-item{background:var(--card-bg); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer;}
+.hist-item-title{font-weight:700; font-size:14px; font-style:italic;}
+.hist-item-sub{font-size:12px; color:var(--muted); margin-top:2px; display:flex; justify-content:space-between; gap:8px;}
+.hist-item-sub .tot{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--green); font-weight:700;}
+.hist-empty{color:var(--muted); font-size:13px; text-align:center; padding:16px 8px;}
+
+/* ---------- Modals ---------- */
+.modal-wrap{position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.6); padding:16px;}
+.modal-card{background:var(--modal-bg); color:var(--text); border-radius:14px; width:100%; max-width:380px; max-height:86dvh; overflow-y:auto; box-shadow:0 16px 48px rgba(0,0,0,.5);}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--divider); font-weight:700; font-size:16px;}
+.modal-body{padding:14px 16px; font-size:14px; line-height:1.45;}
+.modal-body p{margin:0 0 10px;}
+.modal-body label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:12px 0 4px;}
+.modal-body select, .modal-body input[type=text]{width:100%; padding:10px; border-radius:8px; border:1px solid var(--divider); background:var(--input-bg); color:var(--text); font-size:15px;}
+.modal-body .row{display:flex; align-items:center; gap:8px;}
+.modal-body .row .grow{flex:1;}
+.btn-primary{width:100%; padding:11px; background:var(--accent); color:#fff; font-weight:700; font-size:15px; border-radius:9px; margin-top:8px;}
+.btn-ghost{padding:9px 14px; background:var(--input-bg); border-radius:8px; font-weight:600; font-size:14px;}
+.set-toggle{display:flex; gap:8px;}
+.set-toggle button{flex:1; padding:9px; border:1px solid var(--divider); border-radius:8px; font-weight:600; font-size:14px;}
+.set-toggle button.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(20px + env(safe-area-inset-bottom,0px)); background:#111827; color:#fff; border:1px solid #374151; padding:10px 16px; border-radius:10px; font-size:13px; z-index:90; box-shadow:0 8px 24px rgba(0,0,0,.5); max-width:90vw; text-align:center;}
+[data-theme="light"] .toast{background:#1F2937;}
+
+/* ---------- Print: solo la cinta, en blanco y negro ---------- */
+@media print{
+  body{background:#fff;}
+  .no-print{display:none !important;}
+  .app{max-width:none; height:auto; display:block;}
+  .tape-wrap{overflow:visible; padding:0;}
+  .trow, .trow .sign, .trow .amt, .trow .cmt, .trow .cmt input, .trow.text-row{color:#000 !important; background:#fff !important; border-color:#000 !important;}
+  .trow .amt.sub, .trow .amt.neg{color:#000 !important;}
+  .rule, .rule-double{border-color:#000 !important;}
+  .cursor{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ======= TOP BAR ======= -->
+  <header class="topbar no-print">
+    <button id="btn-menu" class="icon-btn" title="Documentos" aria-label="Documentos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+    <button id="doc-title" class="title-btn" title="Toca para renombrar">Hoja de trabajo</button>
+    <button id="btn-layout" class="icon-btn" title="Teclado estándar / compacto" aria-label="Diseño del teclado">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="#F59E0B"/><rect x="13" y="3" width="8" height="8" rx="1.5" fill="#2F9BE8"/><rect x="3" y="13" width="8" height="8" rx="1.5" fill="#3ECF6E"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="#8B9CA9"/></svg>
+    </button>
+    <button id="btn-theme" class="icon-btn accent" title="Claro / oscuro" aria-label="Cambiar tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
+    </button>
+    <span class="free-badge">[ &#10022; FREE ]</span>
+    <button id="btn-overflow" class="icon-btn" title="Más opciones" aria-label="Más opciones">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+    </button>
+    <div id="overflow-menu" class="menu hidden">
+      <button data-menu="save">Guardar</button>
+      <button data-menu="rename">Renombrar</button>
+      <button data-menu="new">Nueva</button>
+      <button data-menu="export">Exportar TXT</button>
+      <button data-menu="print">Imprimir / PDF</button>
+      <button data-menu="copy">Copiar</button>
+      <button data-menu="settings">Configuraci&oacute;n</button>
+      <button data-menu="help">Ayuda</button>
+    </div>
+  </header>
+
+  <!-- ======= SCRIM + DOCUMENTS DRAWER ======= -->
+  <div id="scrim" class="scrim hidden no-print"></div>
+  <aside id="drawer" class="drawer no-print" aria-label="Documentos">
+    <div class="drawer-head">
+      <h2>Documentos</h2>
+      <button id="btn-new-doc" class="icon-btn accent" title="Nuevo documento" aria-label="Nuevo documento">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div class="doc-card current" id="current-doc-card">
+        <div class="doc-card-title" id="current-doc-title">Hoja de trabajo</div>
+        <div class="doc-card-sub" id="current-doc-sub"></div>
+        <span class="doc-card-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+        </span>
+      </div>
+      <div id="history-list"></div>
+      <hr class="drawer-hr">
+      <button class="drawer-row" id="btn-import-doc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        <span>&#10022; Importar documentos</span>
+      </button>
+      <hr class="drawer-hr">
+      <button class="drawer-row" id="btn-backup-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
+        <span>&#10022; Copia / Restauraci&oacute;n</span>
+        <span class="chev" id="backup-chev">&#9660;</span>
+      </button>
+      <div id="backup-section" class="backup-box hidden">
+        <button id="btn-backup-export">Exportar copia (JSON)</button>
+        <button id="btn-backup-import">Importar copia (JSON)</button>
+      </div>
+      <hr class="drawer-hr">
+      <button class="drawer-row" id="btn-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
+        <span>Ajustes</span>
+      </button>
+      <button class="drawer-row" id="btn-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></svg>
+        <span>Info</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======= TAPE ======= -->
+  <main id="tape-wrap" class="tape-wrap">
+    <div id="tape-lines" class="tape-lines"></div>
+  </main>
+
+  <!-- ======= VALUE BAR ======= -->
+  <div id="valuebar" class="valuebar no-print">
+    <button id="vb-tab" class="vb-btn tab" title="Cambiar a funciones (K2)">K1</button>
+    <button id="vb-abc" class="vb-btn tab off" title="Teclado de letras (ABC)">ABC</button>
+    <span class="vb-sign" id="vb-sign">&quot;+&quot;</span>
+    <button id="vb-kbd" class="vb-btn" title="Editar comentario de la l&iacute;nea activa">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg>
+    </button>
+    <button id="vb-undo" class="vb-btn" title="Deshacer">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+    </button>
+    <button id="vb-redo" class="vb-btn" title="Rehacer">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>
+    </button>
+    <span id="vb-total" class="vb-total">0.00</span>
+    <button id="vb-copy" class="vb-btn vb-copy" title="Copiar el total">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+
+  <!-- ======= KEYPAD ======= -->
+  <div id="keypad" class="keypad no-print"></div>
+</div>
+
+<!-- ======= MODAL: CONFIGURACIÓN ======= -->
+<div id="modal-settings" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>Configuraci&oacute;n</span>
+      <button class="icon-btn" data-close="modal-settings" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label>Decimales</label>
+      <select id="set-decimals">
+        <option value="0">0 decimales</option>
+        <option value="2" selected>2 decimales</option>
+        <option value="4">4 decimales</option>
+        <option value="auto">Autom&aacute;tico (hasta 6)</option>
+      </select>
+      <label>Tema</label>
+      <div class="set-toggle">
+        <button id="set-dark" class="on">Oscuro</button>
+        <button id="set-light">Claro</button>
+      </div>
+      <label>Teclado</label>
+      <div class="set-toggle">
+        <button id="set-compact-off" class="on">Est&aacute;ndar (6 filas)</button>
+        <button id="set-compact-on">Compacto (5 filas)</button>
+      </div>
+      <label>Tama&ntilde;o de letra de la cinta</label>
+      <div class="row">
+        <button class="btn-ghost" id="set-font-minus">A-</button>
+        <span class="grow" style="text-align:center" id="lbl-font-size">16px</span>
+        <button class="btn-ghost" id="set-font-plus">A+</button>
+      </div>
+      <p style="color:var(--muted); font-size:12px; margin-top:14px;">Los cambios se aplican a la cinta actual. Tus cintas y tu historial se guardan en este dispositivo.</p>
+      <button class="btn-primary" data-close="modal-settings">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: AYUDA ======= -->
+<div id="modal-help" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>C&oacute;mo usar CalcTape</span>
+      <button class="icon-btn" data-close="modal-help" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p><b>1.</b> La cinta tiene <b>dos columnas</b>: a la izquierda el c&aacute;lculo (signo + cantidad) y a la derecha el comentario, con un espacio claro entre ambas.</p>
+      <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). <b>=</b> inserta un subtotal en verde. La l&iacute;nea final con doble raya es el total, en rojo si es negativo.</p>
+      <p><b>3.</b> Toca una l&iacute;nea para activarla. Su comentario se escribe con la pesta&ntilde;a <b>ABC</b> (teclado de letras de la propia app, sin teclado del sistema): las letras van a la segunda columna. <b>123</b> o <b>&#9166;</b> vuelve a los n&uacute;meros.</p>
+      <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal). El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
+      <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
+      <p><b>6.</b> <b>MC / MR / M+ / M-</b> es la memoria. <b>Guardar</b> archiva la cinta en Documentos, en este dispositivo.</p>
+      <p><b>7.</b> <b>Exportar TXT</b> descarga la cinta como texto, y <b>Imprimir / PDF</b> la imprime o la guarda como PDF.</p>
+      <p style="color:var(--muted); font-size:12px;">Atajos: Ctrl+Z deshacer, Ctrl+Y rehacer, Ctrl+S guardar, Esc limpiar.</p>
+      <button class="btn-primary" data-close="modal-help">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: INFO ======= -->
+<div id="modal-info" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>Info</span>
+      <button class="icon-btn" data-close="modal-info" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p><b>CalcTape Web 1.0</b></p>
+      <p>Calculadora con cinta de papel. Funciona sin conexi&oacute;n y guarda tus cintas e historial en este dispositivo.</p>
+      <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, pesta&ntilde;a ABC, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
+      <button class="btn-primary" data-close="modal-info">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-slot"></div>
+<input type="file" id="file-import-txt" accept=".txt,text/plain" class="hidden">
+<input type="file" id="file-import-backup" accept=".json,application/json" class="hidden">
+
+<script>
+/* =====================================================================
+   CalcTape Web — motor de la cinta (basado en la app web verificada)
+   Estado en localStorage con las claves originales:
+   calctape_data / calctape_title / calctape_history_cache
+   ===================================================================== */
+'use strict';
+
+var tapeLines = [{ id: 1, text: '', val: 0 }];
+var currentTapeTitle = 'Hoja de trabajo';
+var currentDocDate = '';
+var pendingSign = '+';
+var activeLineIndex = 0;
+var lineCounter = 2;
+var roundingDecimals = 2;
+var currentFontSize = 16;
+var darkMode = true;
+var compactKeypad = false;
+var keypadTab = 0; /* 0 = K1, 1 = K2, 2 = ABC */
+var abcShift = false;
+var memoryValue = 0;
+var savedHistories = [];
+var historyStack = [];
+var historyIndex = -1;
+var runningTotal = 0;
+
+function $(id){ return document.getElementById(id); }
+
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function nowLabel(){
+  var d = new Date();
+  var date = d.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+  var time = d.toLocaleTimeString('es-ES', { hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true });
+  return (date + ' ' + time).replace(' p. m.', ' p.m.').replace(' a. m.', ' a.m.');
+}
+function showToast(msg){
+  var slot = $('toast-slot');
+  slot.innerHTML = '';
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  slot.appendChild(t);
+  setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 2400);
+}
+
+/* ---------- formato de números (EEUU: 1,234.56) ---------- */
+function formatNumber(num){
+  if (num === null || num === undefined || isNaN(num)) return '0.00';
+  if (roundingDecimals === 'auto') {
+    return num.toLocaleString('en-US', { maximumFractionDigits: 6 });
+  }
+  var d = parseInt(roundingDecimals, 10);
+  return num.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+/* ---------- recálculo de la cinta (motor verificado) ---------- */
+function recalculateTape(){
+  var total = 0;
+  var variables = {};
+  tapeLines.forEach(function(line){
+    var text = (line.text || '').trim();
+    if (text.indexOf('=') >= 0) {
+      var parts = text.split('=');
+      var varName = parts[0].trim();
+      var varVal = parseFloat(String(parts[1]).replace(/,/g, '').trim());
+      if (varName && !isNaN(varVal)) variables[varName] = varVal;
+    }
+    var mainContent = text;
+    if (text.indexOf('#') >= 0) mainContent = text.split('#')[0].trim();
+    var op = '+';
+    if (/^[+\-*\/%]/.test(mainContent)) {
+      op = mainContent.charAt(0);
+      mainContent = mainContent.substring(1).trim();
+    } else if (mainContent.charAt(0) === '=') {
+      op = '=';
+      mainContent = mainContent.substring(1).trim();
+    }
+    if (variables[mainContent] !== undefined) mainContent = String(variables[mainContent]);
+    var isPercent = false;
+    if (/%\s*$/.test(mainContent)) {
+      isPercent = true;
+      mainContent = mainContent.replace(/%\s*$/, '').trim();
+    }
+    var num = parseFloat(String(mainContent).replace(/,/g, ''));
+    if (isPercent && !isNaN(num)) num = (total * num) / 100;
+    if (op === '=') {
+      line.val = total;
+      line.isTotal = true;
+    } else {
+      line.isTotal = false;
+      if (!isNaN(num)) {
+        if (op === '%') { num = (total * num) / 100; total += num; }
+        else if (op === '+') { total += num; }
+        else if (op === '-') { total -= num; }
+        else if (op === '*') { total *= num; }
+        else if (op === '/') { if (num !== 0) total /= num; }
+        line.val = num;
+      } else {
+        line.val = 0;
+      }
+    }
+  });
+  runningTotal = total;
+  return total;
+}
+
+/* ---------- partes de una línea: cálculo | comentario ---------- */
+function isNumericText(s){
+  if (!s) return false;
+  s = s.replace(/,/g, '').trim();
+  if (/%$/.test(s)) s = s.slice(0, -1).trim();
+  /* Un punto final cuenta como número parcial mientras se teclea (ej. "8221."). */
+  return /^-?\d+(\.\d*)?$/.test(s);
+}
+function splitMainComment(text){
+  var h = text.indexOf('#');
+  if (h < 0) return { main: text.trim(), comment: '' };
+  return { main: text.slice(0, h).trim(), comment: text.slice(h + 1).trim() };
+}
+function splitLine(line){
+  var raw = line.text || '';
+  var mc = splitMainComment(raw);
+  var main = mc.main, comment = mc.comment;
+  if (main.charAt(0) === '=') {
+    var rest = main.slice(1).trim();
+    var label = comment || (rest && !isNumericText(rest) ? rest : 'Total');
+    return { kind:'subtotal', sign:'+', amount: line.val, comment: label };
+  }
+  if (/^[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_ ]*=\s*-?[\d.,]/.test(main)) {
+    return { kind:'text', text: raw };
+  }
+  var sign = '+', numText = main;
+  var m = main.match(/^([+\-*/%×÷])\s*(.*)$/);
+  if (m) { sign = m[1]; numText = (m[2] || '').trim(); }
+  if (numText === '') return { kind:'operator', sign: sign, comment: comment };
+  if (isNumericText(numText)) return { kind:'amount', sign: sign, amount: line.val, comment: comment };
+  if (/^[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_ ]*$/.test(numText)) {
+    return { kind:'amount', sign: sign, amount: line.val, comment: comment, varName: numText };
+  }
+  return { kind:'text', text: raw };
+}
+function numberEnd(text){
+  var h = text.indexOf('#');
+  return h >= 0 ? h : text.length;
+}
+function opDisplay(op){
+  if (op === '*') return '×';
+  if (op === '/') return '÷';
+  return op;
+}
+function opFromDisplay(ch){
+  if (ch === '×') return '*';
+  if (ch === '÷') return '/';
+  if (ch === '−') return '-';
+  return ch;
+}
+function signedAmountFor(part){
+  if (part.kind === 'subtotal') return part.amount;
+  if (part.sign === '-') return -(part.amount || 0);
+  return part.amount || 0;
+}
+
+/* ---------- render de la cinta (dos columnas) ---------- */
+function renderTape(){
+  recalculateTape();
+  var box = $('tape-lines');
+  box.innerHTML = '';
+  if (tapeLines.length === 0) tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+  if (activeLineIndex < 0 || activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+
+  tapeLines.forEach(function(line, index){
+    var part = splitLine(line);
+    if (part.kind === 'subtotal') {
+      var rule = document.createElement('div');
+      rule.className = 'rule';
+      box.appendChild(rule);
+      var row = document.createElement('div');
+      row.className = 'trow' + (index === activeLineIndex ? ' active' : '');
+      row.dataset.idx = index;
+      row.innerHTML =
+        '<span class="sign">+</span>' +
+        '<span class="amt sub">' + escapeHtml(formatNumber(part.amount)) + '</span>' +
+        '<span class="cmt"><input type="text" class="comment-input" inputmode="none" autocomplete="off" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
+      if (index === activeLineIndex) {
+        var cur = document.createElement('span');
+        cur.className = 'cursor';
+        cur.textContent = '|';
+        row.querySelector('.cmt').appendChild(cur);
+      }
+      box.appendChild(row);
+      return;
+    }
+    if (part.kind === 'text') {
+      var trow = document.createElement('div');
+      trow.className = 'trow text-row' + (index === activeLineIndex ? ' active' : '');
+      trow.dataset.idx = index;
+      trow.textContent = part.text === '' ? '' : part.text;
+      if (part.text === '') {
+        var c0 = document.createElement('span');
+        c0.className = 'cursor';
+        c0.textContent = '|';
+        trow.appendChild(c0);
+      } else if (index === activeLineIndex) {
+        var c1 = document.createElement('span');
+        c1.className = 'cursor';
+        c1.textContent = '|';
+        trow.appendChild(c1);
+      }
+      box.appendChild(trow);
+      return;
+    }
+    if (part.kind === 'operator') {
+      var orow = document.createElement('div');
+      orow.className = 'trow' + (index === activeLineIndex ? ' active' : '');
+      orow.dataset.idx = index;
+      orow.innerHTML =
+        '<span class="sign">' + escapeHtml(part.sign) + '</span>' +
+        '<span class="amt"></span>' +
+        '<span class="cmt">' + (index === activeLineIndex ? '<span class="cursor">|</span>' : '') + '</span>';
+      box.appendChild(orow);
+      return;
+    }
+    /* amount */
+    var amt = part.amount || 0;
+    var neg = signedAmountFor(part) < 0;
+    var arow = document.createElement('div');
+    arow.className = 'trow' + (index === activeLineIndex ? ' active' : '');
+    arow.dataset.idx = index;
+    arow.innerHTML =
+      '<span class="sign">' + escapeHtml(part.sign) + '</span>' +
+      '<span class="amt' + (neg ? ' neg' : '') + '">' + escapeHtml(formatNumber(amt)) + '</span>' +
+      '<span class="cmt"><input type="text" class="comment-input" inputmode="none" autocomplete="off" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
+    if (index === activeLineIndex) {
+      var cu = document.createElement('span');
+      cu.className = 'cursor';
+      cu.textContent = '|';
+      arow.querySelector('.cmt').appendChild(cu);
+    }
+    box.appendChild(arow);
+  });
+
+  /* fila del total final: doble raya */
+  var dbl = document.createElement('div');
+  dbl.className = 'rule-double';
+  box.appendChild(dbl);
+  var frow = document.createElement('div');
+  frow.className = 'trow';
+  var totNeg = runningTotal < 0;
+  frow.innerHTML =
+    '<span class="sign">' + (totNeg ? '-' : '+') + '</span>' +
+    '<span class="amt' + (totNeg ? ' neg' : ' sub') + '">' + escapeHtml(formatNumber(Math.abs(runningTotal))) + '</span>' +
+    '<span class="cmt">a favor</span>';
+  box.appendChild(frow);
+
+  /* fila fantasma: tocar el espacio vacío crea una línea nueva */
+  var last = tapeLines[tapeLines.length - 1];
+  if ((last.text || '').trim() !== '') {
+    var ph = document.createElement('div');
+    ph.className = 'trow phantom';
+    ph.innerHTML = '<span class="cursor">|</span>';
+    ph.addEventListener('click', function(){ startNewLine(); });
+    box.appendChild(ph);
+  }
+
+  $('vb-total').textContent = formatNumber(runningTotal);
+  $('vb-sign').innerHTML = '&quot;' + escapeHtml(pendingSign) + '&quot;';
+  updateUndoRedoButtons();
+  saveToLocalStorage();
+  wireTapeRows();
+  var wrap = $('tape-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function wireTapeRows(){
+  var rows = document.querySelectorAll('#tape-lines .trow[data-idx]');
+  rows.forEach(function(row){
+    var idx = parseInt(row.dataset.idx, 10);
+    var amt = row.querySelector('.amt');
+    var sign = row.querySelector('.sign');
+    function activateAmount(){
+      setActiveLine(idx);
+      if (keypadTab === 2) { keypadTab = 0; renderKeypad(); }
+    }
+    if (amt) amt.addEventListener('click', activateAmount);
+    if (sign) sign.addEventListener('click', activateAmount);
+    row.addEventListener('contextmenu', function(e){
+      e.preventDefault();
+      if (tapeLines.length > 1 && confirm('¿Eliminar esta línea de la cinta?')) {
+        tapeLines.splice(idx, 1);
+        if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+        saveHistoryState();
+        renderTape();
+      }
+    });
+    var pressTimer = null;
+    row.addEventListener('touchstart', function(){
+      pressTimer = setTimeout(function(){
+        if (tapeLines.length > 1 && confirm('¿Eliminar esta línea de la cinta?')) {
+          tapeLines.splice(idx, 1);
+          if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+          saveHistoryState();
+          renderTape();
+        }
+      }, 550);
+    }, { passive: true });
+    row.addEventListener('touchend', function(){ if (pressTimer) clearTimeout(pressTimer); });
+    row.addEventListener('touchmove', function(){ if (pressTimer) clearTimeout(pressTimer); });
+  });
+  var inputs = document.querySelectorAll('.comment-input');
+  inputs.forEach(function(inp){
+    var idx = parseInt(inp.dataset.idx, 10);
+    inp.addEventListener('focus', function(){
+      setActiveLine(idx);
+      keypadTab = 2;
+      renderKeypad();
+    });
+    inp.addEventListener('input', function(){
+      updateComment(idx, inp.value, false);
+    });
+    inp.addEventListener('blur', function(){
+      updateComment(idx, inp.value, true);
+    });
+    inp.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
+    });
+  });
+}
+
+function setActiveLine(idx){
+  if (idx < 0 || idx >= tapeLines.length) return;
+  activeLineIndex = idx;
+  document.querySelectorAll('#tape-lines .trow').forEach(function(r){ r.classList.remove('active'); });
+  document.querySelectorAll('#tape-lines .cursor').forEach(function(c){ c.remove(); });
+  var row = document.querySelector('#tape-lines .trow[data-idx="' + idx + '"]');
+  if (row) {
+    row.classList.add('active');
+    var cmt = row.querySelector('.cmt');
+    if (cmt) {
+      var cur = document.createElement('span');
+      cur.className = 'cursor';
+      cur.textContent = '|';
+      cmt.appendChild(cur);
+    } else {
+      var cur2 = document.createElement('span');
+      cur2.className = 'cursor';
+      cur2.textContent = '|';
+      row.appendChild(cur2);
+    }
+  }
+}
+
+function startNewLine(){
+  var last = tapeLines[tapeLines.length - 1];
+  if (last && (last.text || '').trim() === '') {
+    activeLineIndex = tapeLines.length - 1;
+    renderTape();
+    return;
+  }
+  tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+  activeLineIndex = tapeLines.length - 1;
+  pendingSign = '+';
+  renderTape();
+}
+
+/* ---------- teclado: K1 / K2 / ABC ---------- */
+function keypadRows(){
+  if (keypadTab === 1) {
+    return [
+      [ {l:'+ IVA', a:'tax', v:8.5, c:'fn'}, {l:'− IVA', a:'tax', v:-8.5, c:'fn'}, {l:'Nota', a:'comment', c:'fn'}, {l:'Var', a:'var', c:'fn'} ],
+      [ {l:'M+', a:'mem', v:'M+', c:'fn'}, {l:'M-', a:'mem', v:'M-', c:'fn'}, {l:'MR', a:'mem', v:'MR', c:'fn'}, {l:'MC', a:'mem', v:'MC', c:'fn'} ],
+      [ {l:'C', a:'clearline', c:'fn'}, {l:'AC', a:'clear', c:'danger'}, {l:'⌫', a:'back', c:'back'}, {l:'Subtotal', a:'subtotal', c:'op'} ]
+    ];
+  }
+  if (keypadTab === 2) {
+    var rows = [];
+    var letter = function(ch){
+      var label = abcShift ? ch.toUpperCase() : ch;
+      return { l: label, a:'letter', v: label, c:'abc', w: 1 };
+    };
+    rows.push('qwertyuiop'.split('').map(letter));
+    rows.push('asdfghjklñ'.split('').map(letter));
+    var r3 = [{ l:'⇧', a:'shift', c: abcShift ? 'shift-on' : 'fn', w: 1.5 }];
+    'zxcvbnm'.split('').forEach(function(ch){ r3.push(letter(ch)); });
+    r3.push({ l:'⌫', a:'abcback', c:'back', w: 1.5 });
+    rows.push(r3);
+    rows.push([
+      { l:'123', a:'abcexit', c:'fn', w: 1.5 },
+      { l:'Espacio', a:'letter', v:' ', c:'abc', w: 5 },
+      { l:'.', a:'letter', v:'.', c:'abc', w: 1.5 },
+      { l:'↵', a:'abcexit', c:'op', w: 2 }
+    ]);
+    return rows;
+  }
+  var K = function(l, a, v, c){ return { l:l, a:a, v:(v === undefined ? l : v), c:(c || '') }; };
+  if (compactKeypad) {
+    return [
+      [ K('AC','clear',null,'danger'), K('⌫','back',null,'back'), K('MR','mem','MR','fn'), K('÷','op','/','op') ],
+      [ K('7','digit'), K('8','digit'), K('9','digit'), K('×','op','*','op') ],
+      [ K('4','digit'), K('5','digit'), K('6','digit'), K('−','op','-','op') ],
+      [ K('1','digit'), K('2','digit'), K('3','digit'), K('+','op','+','op') ],
+      [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), K('=','equal',null,'op') ]
+    ];
+  }
+  return [
+    [ K('AC','clear',null,'danger'), K('⌫','back',null,'back'), K('MR','mem','MR','fn'), { l:'Botón personalizado', a:'comment', c:'fn-small' } ],
+    [ K('M+','mem','M+','fn'), K('M-','mem','M-','fn'), K('MC','mem','MC','fn'), K('÷','op','/','op') ],
+    [ K('7','digit'), K('8','digit'), K('9','digit'), K('×','op','*','op') ],
+    [ K('4','digit'), K('5','digit'), K('6','digit'), K('−','op','-','op') ],
+    [ K('1','digit'), K('2','digit'), K('3','digit'), K('+','op','+','op') ],
+    [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), K('=','equal',null,'op') ]
+  ];
+}
+
+function renderKeypad(){
+  var kp = $('keypad');
+  kp.innerHTML = '';
+  keypadRows().forEach(function(row){
+    var r = document.createElement('div');
+    r.className = 'krow';
+    row.forEach(function(k){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'key' + (k.c ? ' ' + k.c : '');
+      b.textContent = k.l;
+      if (k.w) b.style.flexGrow = k.w;
+      b.addEventListener('click', function(){ onKeyPress(k); });
+      r.appendChild(b);
+    });
+    kp.appendChild(r);
+  });
+  var tabBtn = $('vb-tab');
+  tabBtn.textContent = keypadTab === 1 ? 'K2' : 'K1';
+  tabBtn.classList.toggle('off', keypadTab === 2);
+  var abcBtn = $('vb-abc');
+  abcBtn.classList.toggle('off', keypadTab !== 2);
+}
+
+/* ---------- acciones del teclado ---------- */
+function onKeyPress(k){
+  switch (k.a) {
+    case 'digit': pressDigit(k.v); break;
+    case 'decimal': pressDecimal(); break;
+    case 'op': pressOperator(k.v); break;
+    case 'equal': pressEqual(); break;
+    case 'clear': clearAll(); break;
+    case 'clearline': clearCurrentLine(); break;
+    case 'back': backspace(); break;
+    case 'mem': memoryAction(k.v); break;
+    case 'tax': applyTax(k.v); break;
+    case 'comment': insertCommentPrompt(); break;
+    case 'var': insertVariablePrompt(); break;
+    case 'subtotal': insertSubtotalLine(); break;
+    case 'letter': insertLetterToComment(k.v); break;
+    case 'shift': abcShift = !abcShift; renderKeypad(); break;
+    case 'abcback': backspaceComment(); break;
+    case 'abcexit': keypadTab = 0; renderKeypad(); break;
+  }
+}
+
+function digitTargetIndex(){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  var kind = splitLine(tapeLines[i]).kind;
+  if (kind === 'subtotal' || kind === 'text') {
+    tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+    return activeLineIndex;
+  }
+  return i;
+}
+
+function pressDigit(d){
+  var idx = digitTargetIndex();
+  var line = tapeLines[idx];
+  var end = numberEnd(line.text);
+  var numPart = line.text.slice(0, end);
+  if (numPart.trim() === '' || /^[+\-*/%×÷]$/.test(numPart.trim())) {
+    var sign = numPart.trim() || pendingSign;
+    line.text = sign + ' ' + d + line.text.slice(end);
+  } else {
+    line.text = line.text.slice(0, end) + d + line.text.slice(end);
+  }
+  commitEdit('type:' + line.id);
+  renderTape();
+}
+
+function pressDecimal(){
+  var idx = digitTargetIndex();
+  var line = tapeLines[idx];
+  var end = numberEnd(line.text);
+  var numPart = line.text.slice(0, end);
+  if (numPart.indexOf('.') >= 0) return;
+  if (numPart.trim() === '' || /^[+\-*/%×÷]$/.test(numPart.trim())) {
+    var sign = numPart.trim() || pendingSign;
+    line.text = sign + ' 0.' + line.text.slice(end);
+  } else {
+    line.text = line.text.slice(0, end) + '.' + line.text.slice(end);
+  }
+  commitEdit('type:' + line.id);
+  renderTape();
+}
+
+function pressOperator(op){
+  if (op === '%') { applyPercentPostfix(); return; }
+  pendingSign = op;
+  var i = activeLineIndex;
+  if (i >= 0 && i < tapeLines.length) {
+    var main = splitMainComment(tapeLines[i].text).main;
+    if (main === '' || /^[+\-*/%×÷]$/.test(main)) {
+      tapeLines[i].text = opDisplay(op) + ' ';
+      saveHistoryState();
+      renderTape();
+      return;
+    }
+  }
+  tapeLines.push({ id: lineCounter++, text: opDisplay(op) + ' ', val: 0 });
+  activeLineIndex = tapeLines.length - 1;
+  saveHistoryState();
+  renderTape();
+}
+
+/* % es posfijo: 10% = 10% del total acumulado. Se añade a la línea
+   numérica activa ("+ 10" -> "+ 10%"); si la línea está vacía, "% "
+   queda como operador para el número que se teclee después. */
+function applyPercentPostfix(){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  var line = tapeLines[i];
+  if (!line) return;
+  var part = splitLine(line);
+  if (part.kind === 'amount') {
+    var end = numberEnd(line.text);
+    var numPart = line.text.slice(0, end);
+    if (!/%\s*$/.test(numPart)) {
+      line.text = numPart + '%' + line.text.slice(end);
+      saveHistoryState();
+      renderTape();
+    }
+    return;
+  }
+  if (part.kind === 'operator') {
+    line.text = '% ';
+    pendingSign = '%';
+    saveHistoryState();
+    renderTape();
+    return;
+  }
+  tapeLines.push({ id: lineCounter++, text: '% ', val: 0 });
+  activeLineIndex = tapeLines.length - 1;
+  pendingSign = '%';
+  saveHistoryState();
+  renderTape();
+}
+
+function pressEqual(){
+  insertSubtotalLine();
+}
+
+function insertSubtotalLine(){
+  tapeLines.push({ id: lineCounter++, text: '= Total', val: 0, isTotal: true });
+  activeLineIndex = tapeLines.length - 1;
+  pendingSign = '+';
+  saveHistoryState();
+  renderTape();
+}
+
+function backspace(){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  var line = tapeLines[i];
+  if (!line) return;
+  if (splitLine(line).kind === 'subtotal') {
+    if (tapeLines.length > 1) {
+      tapeLines.splice(i, 1);
+      if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+      saveHistoryState();
+      renderTape();
+    }
+    return;
+  }
+  var mc = splitMainComment(line.text);
+  if (mc.comment !== '') {
+    updateComment(i, mc.comment.slice(0, -1), true);
+    return;
+  }
+  var end = numberEnd(line.text);
+  var numPart = line.text.slice(0, end);
+  if (numPart.length > 1) {
+    line.text = numPart.slice(0, -1) + line.text.slice(end);
+  } else if (tapeLines.length > 1) {
+    tapeLines.splice(i, 1);
+    if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+  } else {
+    line.text = '';
+  }
+  saveHistoryState();
+  renderTape();
+}
+
+function clearCurrentLine(){
+  if (tapeLines.length > 0) {
+    tapeLines.pop();
+    if (tapeLines.length === 0) tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+    saveHistoryState();
+    renderTape();
+  }
+}
+
+function clearAll(){
+  tapeLines = [{ id: 1, text: '', val: 0 }];
+  lineCounter = 2;
+  activeLineIndex = 0;
+  pendingSign = '+';
+  saveHistoryState();
+  renderTape();
+}
+
+function applyTax(p){
+  var sign = p > 0 ? '+' : '';
+  tapeLines.push({ id: lineCounter++, text: sign + p + '% # IVA (' + p + '%)', val: 0 });
+  activeLineIndex = tapeLines.length - 1;
+  saveHistoryState();
+  renderTape();
+}
+
+/* ---------- comentarios (segunda columna) ---------- */
+function updateComment(index, newComment, commit){
+  var line = tapeLines[index];
+  if (!line) return;
+  var clean = String(newComment).replace(/#/g, '').replace(/\s+/g, ' ').trim();
+  var part = splitLine(line);
+  if (part.kind === 'text') {
+    line.text = clean;
+  } else if (part.kind === 'subtotal') {
+    line.text = '= ' + (clean || 'Total');
+  } else {
+    var main = splitMainComment(line.text).main;
+    if (main === '') {
+      line.text = clean;
+    } else {
+      line.text = main + (clean ? ' # ' + clean : '');
+    }
+  }
+  if (commit) {
+    saveHistoryState();
+    renderTape();
+  } else {
+    saveToLocalStorage();
+  }
+  var inp = document.querySelector('.comment-input[data-idx="' + index + '"]');
+  if (inp && inp.value !== clean) inp.value = clean;
+}
+
+function insertLetterToComment(letter){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  var line = tapeLines[i];
+  var part = splitLine(line);
+  if (part.kind === 'subtotal') {
+    tapeLines.push({ id: lineCounter++, text: letter, val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+    renderTape();
+    return;
+  }
+  if (part.kind === 'text') {
+    line.text = (line.text + letter).replace(/\s{2,}/g, ' ');
+    saveToLocalStorage();
+    saveHistoryState();
+    renderTape();
+    if (abcShift) { abcShift = false; renderKeypad(); }
+    return;
+  }
+  var mc = splitMainComment(line.text);
+  var next = (mc.comment + letter).replace(/\s{2,}/g, ' ');
+  updateComment(i, next, false);
+  saveHistoryState();
+  var inp = document.querySelector('.comment-input[data-idx="' + i + '"]');
+  if (inp) inp.value = mc.comment + letter;
+  if (abcShift) { abcShift = false; renderKeypad(); }
+}
+
+function backspaceComment(){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) return;
+  var part = splitLine(tapeLines[i]);
+  if (part.kind === 'text') {
+    tapeLines[i].text = tapeLines[i].text.slice(0, -1);
+    saveHistoryState();
+    renderTape();
+    return;
+  }
+  var mc = splitMainComment(tapeLines[i].text);
+  if (mc.comment !== '') {
+    var next = mc.comment.slice(0, -1);
+    updateComment(i, next, false);
+    saveHistoryState();
+    var inp = document.querySelector('.comment-input[data-idx="' + i + '"]');
+    if (inp) inp.value = next;
+  } else {
+    backspace();
+  }
+}
+
+function insertCommentPrompt(){
+  var note = prompt('Ingrese nota o descripción para la línea:');
+  if (note === null || note.trim() === '') return;
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  var part = splitLine(tapeLines[i]);
+  if (part.kind === 'subtotal') {
+    tapeLines.push({ id: lineCounter++, text: note.trim(), val: 0 });
+    activeLineIndex = tapeLines.length - 1;
+  } else {
+    updateComment(i, (splitMainComment(tapeLines[i].text).comment + ' ' + note.trim()).trim(), false);
+  }
+  saveHistoryState();
+  renderTape();
+}
+
+function insertVariablePrompt(){
+  var varName = prompt('Nombre de la variable (ej. precio, costo):');
+  if (varName === null || varName.trim() === '') return;
+  var varVal = prompt("Valor para '" + varName.trim() + "' (déjalo vacío para usar la variable en una línea):");
+  if (varVal === null) return;
+  if (varVal.trim() === '') {
+    tapeLines.push({ id: lineCounter++, text: varName.trim(), val: 0 });
+  } else {
+    tapeLines.push({ id: lineCounter++, text: varName.trim() + ' = ' + varVal.trim(), val: parseFloat(String(varVal).replace(/,/g, '')) || 0 });
+  }
+  activeLineIndex = tapeLines.length - 1;
+  saveHistoryState();
+  renderTape();
+}
+
+/* ---------- memoria ---------- */
+function memoryAction(which){
+  if (which === 'MC') { memoryValue = 0; showToast('Memoria borrada'); return; }
+  if (which === 'MR') {
+    var s = String(memoryValue);
+    for (var k = 0; k < s.length; k++) {
+      if (s[k] === '.') pressDecimal();
+      else pressDigit(s[k]);
+    }
+    return;
+  }
+  var lastVal = tapeLines.length > 0 ? (tapeLines[tapeLines.length - 1].val || 0) : 0;
+  if (which === 'M+') { memoryValue += lastVal; showToast('M+ (' + formatNumber(memoryValue) + ')'); }
+  if (which === 'M-') { memoryValue -= lastVal; showToast('M- (' + formatNumber(memoryValue) + ')'); }
+}
+
+/* ---------- deshacer / rehacer ---------- */
+/* Modelo: la cima de la pila es siempre el estado actual. Los dígitos
+   de un mismo número se fusionan en una sola entrada (una pulsación de
+   deshacer borra el número completo, no dígito a dígito). */
+var typingSession = null;
+function commitEdit(sessionKey){
+  if (sessionKey && typingSession === sessionKey) {
+    historyStack[historyIndex] = JSON.stringify(tapeLines);
+  } else {
+    if (historyIndex < historyStack.length - 1) historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(JSON.stringify(tapeLines));
+    historyIndex = historyStack.length - 1;
+  }
+  typingSession = sessionKey;
+  updateUndoRedoButtons();
+  saveToLocalStorage();
+}
+function saveHistoryState(){ commitEdit(null); }
+function updateUndoRedoButtons(){
+  var u = $('vb-undo'), r = $('vb-redo');
+  if (u) u.disabled = historyIndex <= 0;
+  if (r) r.disabled = historyIndex >= historyStack.length - 1;
+}
+function undo(){
+  if (historyIndex > 0) {
+    typingSession = null;
+    historyIndex--;
+    tapeLines = JSON.parse(historyStack[historyIndex]);
+    if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+    renderTape();
+    updateUndoRedoButtons();
+  }
+}
+function redo(){
+  if (historyIndex < historyStack.length - 1) {
+    typingSession = null;
+    historyIndex++;
+    tapeLines = JSON.parse(historyStack[historyIndex]);
+    if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+    renderTape();
+    updateUndoRedoButtons();
+  }
+}
+
+/* ---------- persistencia local ---------- */
+function saveToLocalStorage(){
+  lsSet('calctape_data', JSON.stringify(tapeLines));
+  lsSet('calctape_title', currentTapeTitle);
+}
+function loadFromLocalStorage(){
+  var saved = lsGet('calctape_data');
+  var savedTitle = lsGet('calctape_title');
+  if (saved) {
+    try {
+      var parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) tapeLines = parsed;
+    } catch(e){}
+  }
+  if (savedTitle) currentTapeTitle = savedTitle;
+  var maxId = 0;
+  tapeLines.forEach(function(l){ if (l.id > maxId) maxId = l.id; });
+  lineCounter = maxId + 1;
+}
+function loadSettings(){
+  var raw = lsGet('calctape_settings');
+  if (!raw) return;
+  try {
+    var s = JSON.parse(raw);
+    if (s.decimals !== undefined) roundingDecimals = s.decimals;
+    if (s.dark !== undefined) darkMode = !!s.dark;
+    if (s.compact !== undefined) compactKeypad = !!s.compact;
+    if (s.fontSize !== undefined) currentFontSize = s.fontSize;
+  } catch(e){}
+}
+function saveSettings(){
+  lsSet('calctape_settings', JSON.stringify({ decimals: roundingDecimals, dark: darkMode, compact: compactKeypad, fontSize: currentFontSize }));
+}
+function applySettings(){
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  $('tape-lines').style.fontSize = currentFontSize + 'px';
+  var lbl = $('lbl-font-size');
+  if (lbl) lbl.textContent = currentFontSize + 'px';
+  var dec = $('set-decimals');
+  if (dec) dec.value = String(roundingDecimals);
+  $('set-dark').classList.toggle('on', darkMode);
+  $('set-light').classList.toggle('on', !darkMode);
+  $('set-compact-on').classList.toggle('on', compactKeypad);
+  $('set-compact-off').classList.toggle('on', !compactKeypad);
+}
+
+/* ---------- historial / documentos ---------- */
+function loadHistoriesFromCache(){
+  var cached = lsGet('calctape_history_cache');
+  if (cached) {
+    try { savedHistories = JSON.parse(cached); } catch(e){ savedHistories = []; }
+  }
+}
+function saveHistoriesToCache(){
+  lsSet('calctape_history_cache', JSON.stringify(savedHistories));
+  renderHistoryList();
+}
+function saveCurrentTapeToHistory(askName){
+  var totalVal = formatNumber(runningTotal);
+  var defName = currentTapeTitle !== 'Hoja de trabajo'
+    ? currentTapeTitle
+    : ('Cinta (' + new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' }) + ')');
+  var titleName = defName;
+  if (askName !== false) {
+    titleName = prompt('Nombre para guardar esta cinta en el historial:', defName);
+    if (titleName === null) return;
+  }
+  var rec = {
+    id: 'tape_' + Date.now(),
+    title: (titleName || defName).trim(),
+    date: nowLabel(),
+    timestamp: Date.now(),
+    lines: JSON.parse(JSON.stringify(tapeLines)),
+    total: totalVal
+  };
+  savedHistories.unshift(rec);
+  currentTapeTitle = rec.title;
+  setTitleUI();
+  saveHistoriesToCache();
+  showToast('Cinta guardada en el historial');
+}
+function loadTapeFromHistory(id){
+  var found = null;
+  savedHistories.forEach(function(h){ if (h.id === id) found = h; });
+  if (!found) return;
+  tapeLines = JSON.parse(JSON.stringify(found.lines));
+  currentTapeTitle = found.title;
+  currentDocDate = found.date;
+  activeLineIndex = tapeLines.length - 1;
+  setTitleUI();
+  saveHistoryState();
+  renderTape();
+  closeDrawer();
+  showToast('Cargada: ' + found.title);
+}
+function deleteHistoryItem(id){
+  if (!confirm('¿Seguro que deseas eliminar esta cinta del historial?')) return;
+  savedHistories = savedHistories.filter(function(h){ return h.id !== id; });
+  saveHistoriesToCache();
+  showToast('Cinta eliminada del historial');
+}
+function renderHistoryList(){
+  var list = $('history-list');
+  list.innerHTML = '';
+  if (savedHistories.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'hist-empty';
+    empty.textContent = 'No hay cintas guardadas todavía.';
+    list.appendChild(empty);
+    return;
+  }
+  savedHistories.forEach(function(item){
+    var el = document.createElement('div');
+    el.className = 'hist-item';
+    var t = document.createElement('div');
+    t.className = 'hist-item-title';
+    t.textContent = item.title;
+    var s = document.createElement('div');
+    s.className = 'hist-item-sub';
+    var d = document.createElement('span');
+    d.textContent = item.date;
+    var tot = document.createElement('span');
+    tot.className = 'tot';
+    tot.textContent = item.total;
+    s.appendChild(d); s.appendChild(tot);
+    el.appendChild(t); el.appendChild(s);
+    el.addEventListener('click', function(){ loadTapeFromHistory(item.id); });
+    el.addEventListener('contextmenu', function(e){ e.preventDefault(); deleteHistoryItem(item.id); });
+    var timer = null;
+    el.addEventListener('touchstart', function(){
+      timer = setTimeout(function(){ deleteHistoryItem(item.id); }, 600);
+    }, { passive: true });
+    el.addEventListener('touchend', function(){ if (timer) clearTimeout(timer); });
+    list.appendChild(el);
+  });
+}
+function setTitleUI(){
+  $('doc-title').textContent = currentTapeTitle;
+  $('current-doc-title').textContent = currentTapeTitle;
+  $('current-doc-sub').textContent = currentDocDate || nowLabel();
+}
+function renameCurrentTape(){
+  var name = prompt('Renombrar cinta actual:', currentTapeTitle);
+  if (name && name.trim()) {
+    currentTapeTitle = name.trim();
+    setTitleUI();
+    saveToLocalStorage();
+  }
+}
+function newDocument(){
+  if (tapeLines.length > 1 || (tapeLines[0] && (tapeLines[0].text || '').trim() !== '')) {
+    saveCurrentTapeToHistory(false);
+  }
+  tapeLines = [{ id: 1, text: '', val: 0 }];
+  lineCounter = 2;
+  currentTapeTitle = 'Hoja de trabajo';
+  currentDocDate = nowLabel();
+  activeLineIndex = 0;
+  pendingSign = '+';
+  setTitleUI();
+  saveHistoryState();
+  renderTape();
+  closeDrawer();
+}
+
+/* ---------- copia / restauración (JSON) ---------- */
+function exportBackup(){
+  var data = { app: 'calctape-web', version: 1, title: currentTapeTitle, date: nowLabel(), lines: tapeLines, history: savedHistories };
+  downloadText(JSON.stringify(data, null, 2), 'calctape-copia-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json');
+  showToast('Copia exportada');
+}
+function importBackupFile(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    try {
+      var data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.lines)) throw new Error('bad');
+      tapeLines = data.lines;
+      if (data.title) currentTapeTitle = data.title;
+      if (Array.isArray(data.history)) savedHistories = data.history;
+      currentDocDate = nowLabel();
+      activeLineIndex = tapeLines.length - 1;
+      setTitleUI();
+      saveHistoriesToCache();
+      saveHistoryState();
+      renderTape();
+      closeDrawer();
+      showToast('Copia restaurada');
+    } catch(e){
+      alert('Ese archivo no es una copia válida de CalcTape.');
+    }
+  };
+  reader.readAsText(file);
+}
+function importTxtFile(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    var lines = String(reader.result).split(/\r?\n/);
+    while (lines.length > 0 && lines[lines.length - 1].trim() === '') lines.pop();
+    if (lines.length === 0) { showToast('El archivo está vacío'); return; }
+    tapeLines = lines.map(function(t, i){ return { id: i + 1, text: t, val: 0 }; });
+    lineCounter = lines.length + 1;
+    currentTapeTitle = file.name.replace(/\.[^.]+$/, '');
+    currentDocDate = nowLabel();
+    activeLineIndex = tapeLines.length - 1;
+    setTitleUI();
+    saveHistoryState();
+    renderTape();
+    closeDrawer();
+    showToast('Documento importado');
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- exportar / imprimir / copiar ---------- */
+function downloadText(content, filename, mime){
+  var blob = new Blob([content], { type: (mime || 'text/plain') + ';charset=utf-8' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(function(){
+    if (link.parentNode) link.parentNode.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }, 500);
+}
+function exportTxt(){
+  var content = 'CalcTape Export - ' + currentTapeTitle + '\n=====================\n\n';
+  tapeLines.forEach(function(l, idx){ content += (idx + 1) + '. ' + l.text + '\n'; });
+  content += '\n=====================\nTOTAL: ' + formatNumber(runningTotal) + '\n';
+  downloadText(content, currentTapeTitle.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.txt', 'text/plain');
+  showToast('Cinta exportada como TXT');
+}
+function copyTotal(){
+  var text = formatNumber(runningTotal);
+  function done(){ showToast('Total copiado: ' + text); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+  } else {
+    fallbackCopy(text); done();
+  }
+}
+function fallbackCopy(text){
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+}
+function copyTape(){
+  var text = tapeLines.map(function(l){ return l.text; }).join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ showToast('Cinta copiada'); }, function(){ fallbackCopy(text); showToast('Cinta copiada'); });
+  } else {
+    fallbackCopy(text); showToast('Cinta copiada');
+  }
+}
+
+/* ---------- drawer / menús / modales ---------- */
+function openDrawer(){ $('drawer').classList.add('open'); $('scrim').classList.remove('hidden'); renderHistoryList(); }
+function closeDrawer(){ $('drawer').classList.remove('open'); $('scrim').classList.add('hidden'); }
+function toggleDrawer(){ if ($('drawer').classList.contains('open')) closeDrawer(); else openDrawer(); }
+function openModal(id){ $(id).classList.remove('hidden'); }
+function closeModal(id){ $(id).classList.add('hidden'); }
+function toggleOverflow(){
+  $('overflow-menu').classList.toggle('hidden');
+}
+function handleMenuAction(action){
+  toggleOverflow();
+  if (action === 'save') saveCurrentTapeToHistory(true);
+  else if (action === 'rename') renameCurrentTape();
+  else if (action === 'new') newDocument();
+  else if (action === 'export') exportTxt();
+  else if (action === 'print') window.print();
+  else if (action === 'copy') copyTape();
+  else if (action === 'settings') openModal('modal-settings');
+  else if (action === 'help') openModal('modal-help');
+}
+
+/* ---------- atajos de teclado físico ---------- */
+function setupKeyboardListeners(){
+  document.addEventListener('keydown', function(e){
+    var tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key >= '0' && e.key <= '9') pressDigit(e.key);
+    else if (e.key === '.' || e.key === ',') pressDecimal();
+    else if (e.key === '+') pressOperator('+');
+    else if (e.key === '-') pressOperator('-');
+    else if (e.key === '*') pressOperator('*');
+    else if (e.key === '/') pressOperator('/');
+    else if (e.key === '%') pressOperator('%');
+    else if (e.key === 'Enter') pressEqual();
+    else if (e.key === 'Backspace') backspace();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); }
+    else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); }
+    else if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveCurrentTapeToHistory(true); }
+  });
+}
+
+/* ---------- inicio ---------- */
+function init(){
+  loadSettings();
+  loadHistoriesFromCache();
+  saveHistoriesToCache();
+  loadFromLocalStorage();
+  currentDocDate = nowLabel();
+  setTitleUI();
+  applySettings();
+  saveHistoryState();
+  renderTape();
+  renderKeypad();
+  renderHistoryList();
+  setupKeyboardListeners();
+
+  $('tape-wrap').addEventListener('click', function(e){
+    if (e.target === $('tape-wrap') || e.target === $('tape-lines')) startNewLine();
+  });
+  $('btn-menu').addEventListener('click', toggleDrawer);
+  $('scrim').addEventListener('click', closeDrawer);
+  $('doc-title').addEventListener('click', renameCurrentTape);
+  $('btn-layout').addEventListener('click', function(){
+    compactKeypad = !compactKeypad;
+    saveSettings();
+    renderKeypad();
+    showToast(compactKeypad ? 'Teclado compacto' : 'Teclado estándar');
+  });
+  $('btn-theme').addEventListener('click', function(){
+    darkMode = !darkMode;
+    if (darkMode) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    else { document.documentElement.setAttribute('data-theme', 'light'); }
+    saveSettings();
+    applySettings();
+  });
+  $('btn-overflow').addEventListener('click', function(e){ e.stopPropagation(); toggleOverflow(); });
+  document.addEventListener('click', function(e){
+    var menu = $('overflow-menu');
+    if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== $('btn-overflow')) {
+      menu.classList.add('hidden');
+    }
+  });
+  document.querySelectorAll('#overflow-menu button').forEach(function(b){
+    b.addEventListener('click', function(){ handleMenuAction(b.dataset.menu); });
+  });
+  $('btn-new-doc').addEventListener('click', newDocument);
+  $('current-doc-card').addEventListener('click', closeDrawer);
+  $('btn-import-doc').addEventListener('click', function(){ $('file-import-txt').click(); });
+  $('file-import-txt').addEventListener('change', function(e){
+    if (e.target.files && e.target.files[0]) importTxtFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  $('btn-backup-toggle').addEventListener('click', function(){
+    $('backup-section').classList.toggle('hidden');
+    $('backup-chev').innerHTML = $('backup-section').classList.contains('hidden') ? '&#9660;' : '&#9650;';
+  });
+  $('btn-backup-export').addEventListener('click', exportBackup);
+  $('btn-backup-import').addEventListener('click', function(){ $('file-import-backup').click(); });
+  $('file-import-backup').addEventListener('change', function(e){
+    if (e.target.files && e.target.files[0]) importBackupFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  $('btn-settings').addEventListener('click', function(){ closeDrawer(); openModal('modal-settings'); });
+  $('btn-info').addEventListener('click', function(){ closeDrawer(); openModal('modal-info'); });
+  document.querySelectorAll('[data-close]').forEach(function(b){
+    b.addEventListener('click', function(){ closeModal(b.dataset.close); });
+  });
+  document.querySelectorAll('.modal-wrap').forEach(function(m){
+    m.addEventListener('click', function(e){ if (e.target === m) m.classList.add('hidden'); });
+  });
+
+  $('vb-tab').addEventListener('click', function(){
+    if (keypadTab === 2) { keypadTab = 0; }
+    else { keypadTab = keypadTab === 0 ? 1 : 0; }
+    renderKeypad();
+  });
+  $('vb-abc').addEventListener('click', function(){
+    keypadTab = keypadTab === 2 ? 0 : 2;
+    renderKeypad();
+  });
+  $('vb-kbd').addEventListener('click', function(){
+    keypadTab = keypadTab === 2 ? 0 : 2;
+    renderKeypad();
+    var inp = document.querySelector('.comment-input[data-idx="' + activeLineIndex + '"]');
+    if (inp && keypadTab === 2) inp.focus();
+  });
+  $('vb-undo').addEventListener('click', undo);
+  $('vb-redo').addEventListener('click', redo);
+  $('vb-copy').addEventListener('click', copyTotal);
+
+  $('set-decimals').addEventListener('change', function(e){
+    roundingDecimals = e.target.value === 'auto' ? 'auto' : parseInt(e.target.value, 10);
+    saveSettings();
+    renderTape();
+  });
+  $('set-dark').addEventListener('click', function(){ darkMode = true; saveSettings(); applySettings(); renderTape(); });
+  $('set-light').addEventListener('click', function(){ darkMode = false; saveSettings(); applySettings(); renderTape(); });
+  $('set-compact-on').addEventListener('click', function(){ compactKeypad = true; saveSettings(); applySettings(); renderKeypad(); });
+  $('set-compact-off').addEventListener('click', function(){ compactKeypad = false; saveSettings(); applySettings(); renderKeypad(); });
+  $('set-font-minus').addEventListener('click', function(){
+    currentFontSize = Math.max(12, Math.min(24, currentFontSize - 1));
+    saveSettings(); applySettings();
+  });
+  $('set-font-plus').addEventListener('click', function(){
+    currentFontSize = Math.max(12, Math.min(24, currentFontSize + 1));
+    saveSettings(); applySettings();
+  });
+}
+
+init();
+</script>
+</body>
+</html>
