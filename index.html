@@ -49,7 +49,12 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .app{width:100%; max-width:var(--app-max,520px); margin:0 auto; height:100dvh; display:flex; flex-direction:column; background:var(--tape-bg); position:relative;}
 
 /* ---------- Top bar ---------- */
-.topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:relative; z-index:30;}
+/* (v1.4) La cabecera es siempre opaca y nítida: fondo sólido, sin
+   backdrop-filter ni filter de desenfoque. En iOS Safari, enfocar un
+   input con fuente menor de 16 px dispara un zoom automático que deja
+   borrosa la cabecera (la capa fija se reescala sin re-renderizar);
+   por eso TODOS los inputs enfocables llevan font-size ≥ 16 px. */
+.topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:relative; z-index:30; backdrop-filter:none; -webkit-backdrop-filter:none;}
 .icon-btn{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--text); flex:none;}
 .icon-btn:hover{background:var(--input-bg);}
 .icon-btn svg{width:22px; height:22px;}
@@ -72,11 +77,14 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .trow .amt.neg{color:var(--red);}
 .trow .amt.sub{color:var(--green); font-weight:700;}
 .trow .cmt{flex:1; min-width:0; padding-left:20px; color:var(--muted); font-size:15px; display:flex; align-items:baseline; gap:2px;}
-.trow .cmt input{flex:1; min-width:120px; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
+.trow .cmt input{flex:1; min-width:120px; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; font-size:16px; padding:0; caret-color:var(--accent);}
+/* (v1.4) El input del total en vivo también lleva ≥ 16 px: enfocar un
+   input menor dispara el zoom automático de iOS Safari. */
+#live-comment-input{font-size:16px;}
 .trow .cmt input:focus{color:var(--text);}
 .trow.text-row{color:var(--muted); font-size:15px; padding-left:10px; word-break:break-word;}
 .trow.text-row.active{color:var(--text);}
-.trow.text-row input{flex:1; min-width:0; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
+.trow.text-row input{flex:1; min-width:0; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; font-size:16px; padding:0; caret-color:var(--accent);}
 .trow.text-row.active input{color:var(--text);}
 .cursor{color:var(--accent); font-weight:700; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
 .rule{width:154px; margin:3px 0 1px 8px; border-top:1px solid var(--rule);}
@@ -172,8 +180,8 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .set-row .set-title{font-size:15px; font-weight:600;}
 .set-row .set-desc{font-size:12px; color:var(--muted); margin-top:1px;}
 .set-row .set-value{font-size:14px; color:var(--muted); white-space:nowrap;}
-.set-row select{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:14px; max-width:170px;}
-.set-row input[type=text]{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:14px; max-width:170px;}
+.set-row select{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:16px; max-width:170px;}
+.set-row input[type=text]{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:16px; max-width:170px;}
 .switch{flex:none; width:52px; height:30px; border-radius:15px; background:#CBD5E1; position:relative; border:0; padding:0; transition:background .15s;}
 .switch::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:left .15s;}
 .switch.on{background:var(--accent);}
@@ -215,7 +223,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .modal-body{padding:14px 16px; font-size:14px; line-height:1.45;}
 .modal-body p{margin:0 0 10px;}
 .modal-body label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:12px 0 4px;}
-.modal-body select, .modal-body input[type=text]{width:100%; padding:10px; border-radius:8px; border:1px solid var(--divider); background:var(--input-bg); color:var(--text); font-size:15px;}
+.modal-body select, .modal-body input[type=text]{width:100%; padding:10px; border-radius:8px; border:1px solid var(--divider); background:var(--input-bg); color:var(--text); font-size:16px;}
 .modal-body .row{display:flex; align-items:center; gap:8px;}
 .modal-body .row .grow{flex:1;}
 .btn-primary{width:100%; padding:11px; background:var(--accent); color:#fff; font-weight:700; font-size:15px; border-radius:9px; margin-top:8px;}
@@ -388,7 +396,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
       <p><b>6.</b> <b>MC / MR / M+ / M-</b> es la memoria. <b>Guardar</b> archiva la cinta en Documentos, en este dispositivo.</p>
       <p><b>7.</b> <b>Exportar TXT</b> descarga la cinta como texto, y <b>Imprimir / PDF</b> la imprime o la guarda como PDF.</p>
-      <p style="color:var(--muted); font-size:12px;">Atajos: Ctrl+Z deshacer, Ctrl+Y rehacer, Ctrl+S guardar, Esc limpiar.</p>
+      <p style="color:var(--muted); font-size:12px;">Atajos: Ctrl+Z deshacer, Ctrl+Y rehacer, Ctrl+S guardar. (Borrar la cinta: botón AC, con confirmación.)</p>
       <button class="btn-primary" data-close="modal-help">Entendido</button>
     </div>
   </div>
@@ -404,7 +412,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <p><b>CalcTape Web 1.1</b></p>
       <p>Calculadora con cinta de papel. Funciona sin conexi&oacute;n y guarda tus cintas e historial en este dispositivo.</p>
       <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, comentarios con el teclado del sistema, total en vivo, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
-      <p style="color:var(--muted); font-size:12px;">Versi&oacute;n 1.3: bloques de c&aacute;lculo independientes, l&iacute;neas de ejemplo en la primera apertura y bot&oacute;n de copiar en la l&iacute;nea seleccionada.</p>
+      <p style="color:var(--muted); font-size:12px;">Versi&oacute;n 1.4: correcciones de las anomal&iacute;as de la 1.3 — ninguna l&iacute;nea de texto se vuelve a dibujar como &laquo;+ 0.00&raquo;, los n&uacute;meros tecleados con el teclado del sistema ya no se duplican como comentario, Escape ya no borra la cinta, y la cabecera ya no se difumina en iPhone.</p>
       <button class="btn-primary" data-close="modal-info">Cerrar</button>
     </div>
   </div>
@@ -461,7 +469,11 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <button class="icon-btn" data-close="modal-news" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p><b>CalcTape Web 1.3 &mdash; Novedades</b></p>
+      <p><b>CalcTape Web 1.4 &mdash; Novedades</b></p>
+      <p>&bull; <b>Texto siempre texto</b>: una l&iacute;nea de solo texto tras un total congelado ya no se dibuja como &laquo;+ 0.00&raquo; ni crea subtotales falsos.</p>
+      <p>&bull; <b>N&uacute;meros con el teclado del sistema</b>: teclear &laquo;500&raquo; o &laquo;* 80&raquo; tecla a tecla ya no duplica el n&uacute;mero como comentario ni deja el total en 5.00.</p>
+      <p>&bull; <b>La cinta ya no se borra sola</b>: Escape ya no vac&iacute;a la cinta y Enter fuera de un campo ya no inserta subtotales en 0.00; borrar sigue siendo el bot&oacute;n AC con confirmaci&oacute;n.</p>
+      <p>&bull; <b>Cabecera n&iacute;tida en iPhone</b>: los campos de comentario ya no disparan el zoom autom&aacute;tico de Safari que difuminaba la barra superior.</p>
       <p>&bull; <b>Bloques de c&aacute;lculo independientes</b>: una l&iacute;nea de texto escrita tras el total en vivo congela el total en verde y el bloque siguiente calcula desde 0, como en la CalcTape original. La barra de valor muestra el total del bloque actual.</p>
       <p>&bull; <b>L&iacute;neas de ejemplo en la primera apertura</b>: +255.50, &minus;66.00 y +33.70 con el total 223.20, como en la original.</p>
       <p>&bull; <b>Bot&oacute;n de copiar en la l&iacute;nea seleccionada</b>: toca la cantidad de una l&iacute;nea y pulsa el icono de copiar junto a ella para copiar su valor.</p>
@@ -939,18 +951,62 @@ function wireTapeRows(){
     }
     inp.addEventListener('focus', function(){
       setActiveLine(idx);
+      /* (v1.4) Rol del input, fijado al enfocar: en una línea vacía o
+         con solo un operador pendiente (+, −, ×, ÷ sin número), este
+         input ES el editor de la línea: el usuario escribe "500",
+         "* 80" o "−600" tecla a tecla con el teclado del sistema y el
+         valor completo es el texto de la línea. En una línea que ya
+         tiene importe o subtotal, el input es el editor del
+         comentario. El rol no puede decidirse tecla a tecla, porque
+         el texto cambia mientras se escribe ("5" → "50" → "500"
+         se convertía en "5 # 500" y el total quedaba en 5.00). */
+      var line0 = tapeLines[idx];
+      var p0 = line0 ? splitLine(line0) : null;
+      inp.dataset.editRole = (p0 && p0.kind === 'operator') ? 'line' : 'comment';
+      if (inp.dataset.editRole === 'line' && line0 && (line0.text || '') !== inp.value) {
+        /* En el editor de línea se muestra el texto completo de la
+           línea (p. ej. el "+" pendiente), no solo su comentario. */
+        inp.value = line0.text || '';
+      }
       enterCommentMode();
     });
     inp.addEventListener('input', function(){
-      updateComment(idx, inp.value, false);
+      if (!inp.dataset.editRole) {
+        /* Sin evento de foco previo (p. ej. entrada programática): el
+           rol se deduce del estado de la línea en ese momento y se
+           fija para el resto de la edición, igual que al enfocar. */
+        var l0 = tapeLines[idx];
+        var q0 = l0 ? splitLine(l0) : null;
+        inp.dataset.editRole = (q0 && q0.kind === 'operator') ? 'line' : 'comment';
+      }
+      if (inp.dataset.editRole === 'line') {
+        /* Editor de línea: el valor ES el texto de la línea (con su
+           "# comentario" si lo lleva); no pasa por updateComment, que
+           lo trataría como comentario y lo duplicaría. */
+        var line = tapeLines[idx]; if (!line) return;
+        line.text = inp.value;
+        saveToLocalStorage();
+      } else {
+        updateComment(idx, inp.value, false);
+      }
       /* Total en vivo mientras se teclea (v1.3): en una línea nueva y
          vacía, "500" ya suma 500 y "* 80" ya multiplica antes de
          confirmar; en un comentario normal no cambia nada. */
       refreshTotalsLive();
     });
     inp.addEventListener('blur', function(){
-      updateComment(idx, inp.value, true);
-      exitCommentMode();
+      if (inp.dataset.editRole === 'line') {
+        /* Confirmar como línea de texto (igual que el input de las
+           filas de texto): una línea de texto tras el total en vivo
+           congela el bloque. */
+        maybeFreezeLiveTotal(idx);
+        saveHistoryState();
+        exitCommentMode();
+        renderTape();
+      } else {
+        updateComment(idx, inp.value, true);
+        exitCommentMode();
+      }
     });
     inp.addEventListener('keydown', function(e){
       if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
@@ -1413,6 +1469,15 @@ function maybeFreezeLiveTotal(committedIdx){
   if (committedIdx <= lastAmt) return false;
   var next = tapeLines[lastAmt + 1];
   if (next && splitLine(next).kind === 'subtotal') return false;
+  /* (v1.4) Bloque ya cerrado: si ya existe un subtotal DESPUÉS de la
+     última entrada de importe (p. ej. con una línea vacía entre
+     medias: importe, vacío, subtotal), el bloque ya está cerrado.
+     Congelar de nuevo insertaba un subtotal falso en medio y, al
+     recalcular, el subtotal anterior pasaba a valer 0.00: de ahí el
+     "+ 0.00 hoja". */
+  var closed = false;
+  tapeLines.forEach(function(l, i){ if (i > lastAmt && splitLine(l).kind === 'subtotal') closed = true; });
+  if (closed) return false;
   recalculateTape();
   var label = liveComment || '';
   tapeLines.splice(lastAmt + 1, 0, { id: lineCounter++, text: '= ' + label, val: runningTotal, isTotal: true, label: label });
@@ -1444,6 +1509,11 @@ function insertSubtotalLine(){
      escrito en la línea en vivo pasa al subtotal fijo; si no hay,
      lleva "Total". */
   recalculateTape();
+  /* (v1.4) Un bloque vacío no tiene total que congelar: no insertar
+     un subtotal "0.00" por una pulsación extraviada de Enter o de =.
+     El subtotal de un bloque vacío siempre valdría 0.00 y ensuciaría
+     la cinta (y la barra de valor, que muestra el último subtotal). */
+  if (!blockHasAmount) return;
   var lastIdx = tapeLines.length - 1;
   while (lastIdx >= 0) {
     var t = (tapeLines[lastIdx].text || '').trim();
@@ -1546,6 +1616,11 @@ function updateComment(index, newComment, commit){
     var main = splitMainComment(line.text).main;
     if (main === '') {
       line.text = clean;
+    } else if (clean === main) {
+      /* (v1.4) El comentario escrito es el propio texto de la línea
+         ("500" en una línea "500", "* 80" en "* 80"): no duplicarlo
+         como comentario ("500 # 500"). */
+      line.text = main;
     } else {
       line.text = main + (clean ? ' # ' + clean : '');
     }
@@ -1897,6 +1972,11 @@ function loadFromLocalStorage(){
   var maxId = 0;
   tapeLines.forEach(function(l){ if (l.id > maxId) maxId = l.id; });
   lineCounter = maxId + 1;
+  /* (v1.4) Al abrir, el cursor va a la última línea (o a la primera si
+     el ajuste "Cursor" lo dice), igual que al cargar del historial:
+     antes quedaba en la primera línea y un dígito tecleado a ciegas
+     editaba la primera entrada en vez de añadir al final. */
+  activeLineIndex = (S.cursor === 'first') ? 0 : tapeLines.length - 1;
 }
 /* Líneas de ejemplo de la primera apertura (v1.3): las mismas que
    muestra la página original al abrirla por primera vez, con el
@@ -2482,7 +2562,11 @@ function setupKeyboardListeners(){
     else if (e.key === '%') pressOperator('%');
     else if (e.key === 'Enter') pressEqual();
     else if (e.key === 'Backspace') backspace();
-    else if (e.key === 'Escape') clearAll();
+    /* (v1.4) Escape ya NO borra la cinta: una tecla extraviada con el
+       foco fuera de un input (p. ej. al intentar un atajo del
+       navegador) vaciaba TODA la cinta sin confirmación y dejaba una
+       sola línea "Total" en 0.00. Borrar sigue siendo una acción
+       explícita: el botón AC con su confirmación. */
     else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); }
     else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); }
     else if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveCurrentTapeToHistory(true); }
