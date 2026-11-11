@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light" data-accent="azure">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0E1824">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="application-name" content="CalcTape">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,19 +12,28 @@
 <title>CalcTape — Calculadora con cinta</title>
 <style>
 :root{
+  --tape-bg:#FFFFFF; --topbar-bg:#FFFFFF; --valuebar-bg:#FFFFFF; --drawer-bg:#FFFFFF;
+  --card-bg:#EFF2F7; --accent:#2563EB; --text:#1F2937; --muted:#6B7280;
+  --green:#16A34A; --red:#DC2626; --key-digit:#F1F5F9; --key-op:#E2E8F0; --key-back:#CBD5E1;
+  --divider:#E5E7EB; --danger:#EA7C28; --disabled:#9CA3AF; --active-bg:rgba(37,99,235,.08);
+  --rule:#CBD5E1; --modal-bg:#FFFFFF; --input-bg:rgba(0,0,0,.05);
+}
+[data-theme="dark"]{
   --tape-bg:#0E1824; --topbar-bg:#1A2634; --valuebar-bg:#182533; --drawer-bg:#0F1D2B;
   --card-bg:#3A4B5C; --accent:#2F9BE8; --text:#E9EFF5; --muted:#8B9CA9;
   --green:#3ECF6E; --red:#F0564A; --key-digit:#1E2B3A; --key-op:#27394C; --key-back:#2C3E50;
   --divider:#26374A; --danger:#EA7C28; --disabled:#4A5A6A; --active-bg:rgba(47,155,232,.12);
   --rule:#7C8DA0; --modal-bg:#1A2634; --input-bg:rgba(255,255,255,.06);
 }
-[data-theme="light"]{
-  --tape-bg:#FDFBF7; --topbar-bg:#FFFFFF; --valuebar-bg:#F1F5F9; --drawer-bg:#FFFFFF;
-  --card-bg:#E8EEF4; --accent:#2563EB; --text:#1F2937; --muted:#6B7280;
-  --green:#059669; --red:#DC2626; --key-digit:#FFFFFF; --key-op:#DCE6F2; --key-back:#8FA5B8;
-  --divider:#D5DCE3; --danger:#EA7C28; --disabled:#9CA3AF; --active-bg:rgba(59,130,246,.08);
-  --rule:#9AA7B4; --modal-bg:#FFFFFF; --input-bg:rgba(0,0,0,.05);
-}
+/* ---- temas de acento (Crisp Azure es el predeterminado) ---- */
+[data-accent="azure"]{--accent:#2563EB; --active-bg:rgba(37,99,235,.08);}
+[data-theme="dark"][data-accent="azure"]{--accent:#2F9BE8; --active-bg:rgba(47,155,232,.12);}
+[data-accent="copper"]{--accent:#B06A28; --active-bg:rgba(176,106,40,.10);}
+[data-theme="dark"][data-accent="copper"]{--accent:#D08A4B; --active-bg:rgba(208,138,75,.16);}
+[data-accent="indigo"]{--accent:#5A48D6; --active-bg:rgba(90,72,214,.10);}
+[data-theme="dark"][data-accent="indigo"]{--accent:#7C6CF0; --active-bg:rgba(124,108,240,.16);}
+[data-accent="slate"]{--accent:#64748B; --active-bg:rgba(100,116,139,.12);}
+[data-theme="dark"][data-accent="slate"]{--accent:#9AA7B4; --active-bg:rgba(154,167,180,.16);}
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{
@@ -37,7 +46,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .hidden{display:none !important;}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;}
 
-.app{width:100%; max-width:520px; margin:0 auto; height:100dvh; display:flex; flex-direction:column; background:var(--tape-bg); position:relative;}
+.app{width:100%; max-width:var(--app-max,520px); margin:0 auto; height:100dvh; display:flex; flex-direction:column; background:var(--tape-bg); position:relative;}
 
 /* ---------- Top bar ---------- */
 .topbar{flex:none; height:52px; background:var(--topbar-bg); display:flex; align-items:center; gap:2px; padding:0 6px; border-bottom:1px solid var(--divider); position:relative; z-index:30;}
@@ -53,9 +62,10 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .menu button:hover{background:var(--input-bg);}
 
 /* ---------- Tape ---------- */
-.tape-wrap{flex:1; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 16px; cursor:default;}
+.tape-wrap{flex:1; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 16px; cursor:default; position:relative;}
 .tape-lines{font-size:16px;}
-.trow{display:flex; align-items:baseline; padding:4px 10px 4px 8px; border-left:3px solid transparent; min-height:28px;}
+.tape-lines.show-lines .trow{border-bottom:1px solid var(--rule);}
+.trow{display:flex; align-items:baseline; padding:4px 10px 4px var(--tape-indent,10px); border-left:3px solid transparent; min-height:28px;}
 .trow.active{background:var(--active-bg); border-left-color:var(--accent);}
 .trow .sign{width:22px; flex:none; text-align:center; color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:16px;}
 .trow .amt{width:132px; flex:none; text-align:right; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; color:var(--text); overflow:hidden; white-space:nowrap;}
@@ -66,6 +76,8 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 .trow .cmt input:focus{color:var(--text);}
 .trow.text-row{color:var(--muted); font-size:15px; padding-left:10px; word-break:break-word;}
 .trow.text-row.active{color:var(--text);}
+.trow.text-row input{flex:1; min-width:0; background:transparent; border:0; outline:none; color:var(--muted); font:inherit; padding:0; caret-color:var(--accent);}
+.trow.text-row.active input{color:var(--text);}
 .cursor{color:var(--accent); font-weight:700; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
 .rule{width:154px; margin:3px 0 1px 8px; border-top:1px solid var(--rule);}
 .rule-double{width:154px; margin:3px 0 1px 8px; height:3px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);}
@@ -85,15 +97,76 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
 /* ---------- Keypad ---------- */
 .keypad{flex:none; background:var(--tape-bg); padding:3px 3px calc(3px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:2px;}
 .krow{display:flex; gap:2px;}
-.key{flex:1 1 0; min-width:0; height:52px; border-radius:8px; background:var(--key-digit); color:var(--text); font-size:20px; font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1.05; text-align:center; padding:0 2px; user-select:none; -webkit-user-select:none; touch-action:manipulation;}
+.key{flex:1 1 0; min-width:0; height:var(--key-h,52px); border-radius:8px; background:var(--key-digit); color:var(--text); font-size:var(--key-font,20px); font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1.05; text-align:center; padding:0 2px; user-select:none; -webkit-user-select:none; touch-action:manipulation;}
 .key:active{transform:scale(.96); filter:brightness(1.25);}
 .key.op{background:var(--key-op);}
+.key.eq{background:var(--accent); color:#fff; font-size:17px;}
 .key.fn{background:var(--key-op); color:var(--accent); font-size:16px;}
 .key.fn-small{background:var(--key-op); color:var(--accent); font-size:11px; font-weight:700;}
 .key.danger{background:var(--danger); color:#fff;}
 .key.back{background:var(--key-back); font-size:20px;}
 .key.abc{font-size:17px;}
 .key.shift-on{background:var(--danger); color:#fff;}
+.key.has-sub{flex-direction:column; gap:1px;}
+.key .sub{display:block; font-size:10px; font-weight:600; line-height:1.1; opacity:.85;}
+
+/* ---------- FAB (expandir cinta) ---------- */
+.fab{position:absolute; right:14px; bottom:14px; width:56px; height:56px; border-radius:16px; background:var(--topbar-bg); color:var(--text); border:1px solid var(--divider); box-shadow:0 4px 16px rgba(0,0,0,.28); display:flex; align-items:center; justify-content:center; z-index:40;}
+.fab svg{width:24px; height:24px;}
+.keypad.kbd-hidden{display:none;}
+.app.tape-full .keypad{display:none;}
+.app.comment-editing .trow .cursor{display:none;}
+
+/* ---------- estilo clásico (sin esquinas ni espacios) ---------- */
+.app.classic .key{border-radius:0;}
+.app.classic .keypad{gap:0; padding:0 0 env(safe-area-inset-bottom,0px);}
+.app.classic .krow{gap:0;}
+.app.classic .modal-card{border-radius:0;}
+
+/* ---------- teclado a la derecha (pantallas anchas) ---------- */
+@media (min-width:760px){
+  .app.layout-right{display:grid; grid-template-columns:minmax(0,1fr) 330px; grid-template-rows:auto minmax(0,1fr) auto;}
+  .app.layout-right .topbar{grid-column:1; grid-row:1;}
+  .app.layout-right .tape-wrap{grid-column:1; grid-row:2;}
+  .app.layout-right .valuebar{grid-column:1; grid-row:3;}
+  .app.layout-right .keypad{grid-column:2; grid-row:1 / span 3; justify-content:flex-end;}
+}
+
+/* ---------- Panel de Temas ---------- */
+.theme-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;}
+.theme-card{border:2px solid var(--divider); border-radius:12px; padding:8px; text-align:center; background:var(--modal-bg);}
+.theme-card.selected{border-color:var(--accent);}
+.theme-card .tp-name{font-size:13px; font-weight:600; margin-top:6px;}
+.theme-preview{height:88px; border-radius:8px; background:#0E1824; overflow:hidden; padding:6px; display:flex; flex-direction:column; gap:3px;}
+.theme-preview .tp-bar{height:5px; border-radius:2px; background:var(--tp-accent);}
+.theme-preview .tp-line{height:4px; border-radius:2px; background:#5B6B7C; width:70%;}
+.theme-preview .tp-line.l2{width:45%; background:#3ECF6E;}
+.theme-preview .tp-keys{margin-top:auto; display:grid; grid-template-columns:repeat(4,1fr); gap:2px;}
+.theme-preview .tp-keys span{height:12px; border-radius:2px; background:#27394C;}
+.theme-preview .tp-keys span.eq{background:var(--tp-accent);}
+.theme-preview[data-t="copper"]{--tp-accent:#D08A4B;}
+.theme-preview[data-t="indigo"]{--tp-accent:#7C6CF0;}
+.theme-preview[data-t="slate"]{--tp-accent:#9AA7B4;}
+.theme-preview[data-t="azure"]{--tp-accent:#2F9BE8;}
+
+/* ---------- Pantalla de Ajustes ---------- */
+.settings-screen{max-width:520px;}
+.settings-page{padding:0 0 12px;}
+.set-section{font-size:15px; font-weight:700; padding:16px 16px 4px; color:var(--text);}
+.set-row{display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--divider);}
+.set-row .set-label{flex:1; min-width:0;}
+.set-row .set-title{font-size:15px; font-weight:600;}
+.set-row .set-desc{font-size:12px; color:var(--muted); margin-top:1px;}
+.set-row .set-value{font-size:14px; color:var(--muted); white-space:nowrap;}
+.set-row select{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:14px; max-width:170px;}
+.set-row input[type=text]{background:var(--input-bg); color:var(--text); border:1px solid var(--divider); border-radius:8px; padding:8px; font-size:14px; max-width:170px;}
+.switch{flex:none; width:52px; height:30px; border-radius:15px; background:#CBD5E1; position:relative; border:0; padding:0; transition:background .15s;}
+.switch::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:left .15s;}
+.switch.on{background:var(--accent);}
+.switch.on::after{left:25px;}
+[data-theme="dark"] .switch{background:#475569;}
+.set-back{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--text); flex:none;}
+.set-back svg{width:24px; height:24px;}
 
 /* ---------- Drawer ---------- */
 .scrim{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:55;}
@@ -163,25 +236,25 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
     </button>
     <button id="doc-title" class="title-btn" title="Toca para renombrar">Hoja de trabajo</button>
-    <button id="btn-layout" class="icon-btn" title="Teclado estándar / compacto" aria-label="Diseño del teclado">
+    <button id="btn-layout" class="icon-btn" title="Temas" aria-label="Temas">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="#F59E0B"/><rect x="13" y="3" width="8" height="8" rx="1.5" fill="#2F9BE8"/><rect x="3" y="13" width="8" height="8" rx="1.5" fill="#3ECF6E"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="#8B9CA9"/></svg>
     </button>
     <button id="btn-theme" class="icon-btn accent" title="Claro / oscuro" aria-label="Cambiar tema">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
+      <svg id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
+      <svg id="ic-sun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
     </button>
     <span class="free-badge">[ &#10022; FREE ]</span>
     <button id="btn-overflow" class="icon-btn" title="Más opciones" aria-label="Más opciones">
       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
     </button>
     <div id="overflow-menu" class="menu hidden">
-      <button data-menu="save">Guardar</button>
-      <button data-menu="rename">Renombrar</button>
-      <button data-menu="new">Nueva</button>
-      <button data-menu="export">Exportar TXT</button>
-      <button data-menu="print">Imprimir / PDF</button>
-      <button data-menu="copy">Copiar</button>
-      <button data-menu="settings">Configuraci&oacute;n</button>
-      <button data-menu="help">Ayuda</button>
+      <button data-menu="share">&#10022; Compartir</button>
+      <button data-menu="print">&#10022; Imprimir</button>
+      <button data-menu="copy">Copiar c&aacute;lculo</button>
+      <button data-menu="copyhtml">&#10022; Copiar c&aacute;lculo (HTML)</button>
+      <button data-menu="copytotal">Copiar total general</button>
+      <button data-menu="keyboard">Editar teclado</button>
+      <button data-menu="news">Novedades</button>
     </div>
   </header>
 
@@ -204,6 +277,11 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       </div>
       <div id="history-list"></div>
       <hr class="drawer-hr">
+      <button class="drawer-row" id="btn-save-history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+        <span>Guardar en historial</span>
+      </button>
+      <hr class="drawer-hr">
       <button class="drawer-row" id="btn-import-doc">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
         <span>&#10022; Importar documentos</span>
@@ -223,6 +301,10 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
         <span>Ajustes</span>
       </button>
+      <button class="drawer-row" id="btn-help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.6-3 4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+        <span>Ayuda</span>
+      </button>
       <button class="drawer-row" id="btn-info">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></svg>
         <span>Info</span>
@@ -233,11 +315,15 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
   <!-- ======= TAPE ======= -->
   <main id="tape-wrap" class="tape-wrap">
     <div id="tape-lines" class="tape-lines"></div>
+    <button id="fab" class="fab no-print" title="Expandir / contraer la cinta" aria-label="Expandir cinta">
+      <svg id="fab-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+      <svg id="fab-collapse" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+    </button>
   </main>
 
   <!-- ======= VALUE BAR ======= -->
   <div id="valuebar" class="valuebar no-print">
-    <button id="vb-tab" class="vb-btn tab" title="Cambiar a funciones (K2)">K1</button>
+    <button id="vb-tab" class="vb-btn tab" title="Cambiar teclado (K1/K2/NAV)">K1</button>
     <button id="vb-abc" class="vb-btn tab off" title="Teclado de letras (ABC)">ABC</button>
     <span class="vb-sign" id="vb-sign">&quot;+&quot;</span>
     <button id="vb-kbd" class="vb-btn" title="Editar comentario de la l&iacute;nea activa">
@@ -259,39 +345,17 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
   <div id="keypad" class="keypad no-print"></div>
 </div>
 
-<!-- ======= MODAL: CONFIGURACIÓN ======= -->
+<!-- ======= MODAL: AJUSTES (pantalla completa) ======= -->
 <div id="modal-settings" class="modal-wrap hidden no-print">
-  <div class="modal-card">
-    <div class="modal-head"><span>Configuraci&oacute;n</span>
-      <button class="icon-btn" data-close="modal-settings" aria-label="Cerrar">&times;</button>
+  <div class="modal-card settings-screen">
+    <div class="modal-head">
+      <button class="set-back" data-close="modal-settings" aria-label="Atrás">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </button>
+      <span style="flex:1">Ajustes</span>
+      <span style="width:40px"></span>
     </div>
-    <div class="modal-body">
-      <label>Decimales</label>
-      <select id="set-decimals">
-        <option value="0">0 decimales</option>
-        <option value="2" selected>2 decimales</option>
-        <option value="4">4 decimales</option>
-        <option value="auto">Autom&aacute;tico (hasta 6)</option>
-      </select>
-      <label>Tema</label>
-      <div class="set-toggle">
-        <button id="set-dark" class="on">Oscuro</button>
-        <button id="set-light">Claro</button>
-      </div>
-      <label>Teclado</label>
-      <div class="set-toggle">
-        <button id="set-compact-off" class="on">Est&aacute;ndar (6 filas)</button>
-        <button id="set-compact-on">Compacto (5 filas)</button>
-      </div>
-      <label>Tama&ntilde;o de letra de la cinta</label>
-      <div class="row">
-        <button class="btn-ghost" id="set-font-minus">A-</button>
-        <span class="grow" style="text-align:center" id="lbl-font-size">16px</span>
-        <button class="btn-ghost" id="set-font-plus">A+</button>
-      </div>
-      <p style="color:var(--muted); font-size:12px; margin-top:14px;">Los cambios se aplican a la cinta actual. Tus cintas y tu historial se guardan en este dispositivo.</p>
-      <button class="btn-primary" data-close="modal-settings">Listo</button>
-    </div>
+    <div class="settings-page" id="settings-body"></div>
   </div>
 </div>
 
@@ -303,9 +367,9 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
     </div>
     <div class="modal-body">
       <p><b>1.</b> La cinta tiene <b>dos columnas</b>: a la izquierda el c&aacute;lculo (signo + cantidad) y a la derecha el comentario, con un espacio claro entre ambas.</p>
-      <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). <b>=</b> inserta un subtotal en verde. La l&iacute;nea final con doble raya es el total, en rojo si es negativo.</p>
-      <p><b>3.</b> Toca una l&iacute;nea para activarla. Su comentario se escribe con la pesta&ntilde;a <b>ABC</b> (teclado de letras de la propia app, sin teclado del sistema): las letras van a la segunda columna. <b>123</b> o <b>&#9166;</b> vuelve a los n&uacute;meros.</p>
-      <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal). El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
+      <p><b>2.</b> Toca los n&uacute;meros y un operador (+ &minus; &times; &divide;). Despu&eacute;s de cada entrada la cinta muestra en verde el total acumulado. <b>=/&#9166;</b> inserta un subtotal fijo en verde; el &uacute;ltimo subtotal lleva doble raya.</p>
+      <p><b>3.</b> Toca una l&iacute;nea para activarla. Su comentario se escribe con el <b>teclado del sistema</b>: toca la l&iacute;nea o la pesta&ntilde;a <b>ABC</b> y escribe con Gboard; mientras escribes, el teclado num&eacute;rico se esconde. Toca <b>K1</b> para volver a los n&uacute;meros.</p>
+      <p><b>4.</b> <b>K1</b> es el teclado num&eacute;rico, <b>K2</b> son las funciones (+ IVA, &minus; IVA, Nota, Var, memoria, Subtotal) y <b>NAV</b> navega por la cinta. Desliza el teclado a los lados para cambiar de zona. El icono del teclado en la barra abre la edici&oacute;n del comentario.</p>
       <p><b>5.</b> <b>+ IVA / &minus; IVA</b> aplica el 8.5% sobre el total acumulado. <b>Var</b> guarda un valor con nombre (ej.: precio = 100) para reutilizarlo escribiendo su nombre.</p>
       <p><b>6.</b> <b>MC / MR / M+ / M-</b> es la memoria. <b>Guardar</b> archiva la cinta en Documentos, en este dispositivo.</p>
       <p><b>7.</b> <b>Exportar TXT</b> descarga la cinta como texto, y <b>Imprimir / PDF</b> la imprime o la guarda como PDF.</p>
@@ -322,10 +386,75 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
       <button class="icon-btn" data-close="modal-info" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p><b>CalcTape Web 1.0</b></p>
+      <p><b>CalcTape Web 1.1</b></p>
       <p>Calculadora con cinta de papel. Funciona sin conexi&oacute;n y guarda tus cintas e historial en este dispositivo.</p>
-      <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, pesta&ntilde;a ABC, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
+      <p style="color:var(--muted); font-size:12px;">Cinta en dos columnas, teclado num&eacute;rico completo, comentarios con el teclado del sistema, total en vivo, variables, memoria, IVA y exportaci&oacute;n a TXT y PDF.</p>
       <button class="btn-primary" data-close="modal-info">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: TEMAS ======= -->
+<div id="modal-themes" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>Temas</span>
+      <button class="icon-btn" data-close="modal-themes" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:15px; font-weight:700; margin-bottom:10px;">Cl&aacute;sico (como la versi&oacute;n 7.0)</p>
+      <div class="theme-grid" id="theme-grid"></div>
+      <p style="color:var(--muted); font-size:12px; margin-top:12px;">El tema cambia los colores de acento de la cinta, la barra y el teclado.</p>
+      <button class="btn-primary" data-close="modal-themes">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: EDITAR TECLADO ======= -->
+<div id="modal-keyboard" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>Editar teclado</span>
+      <button class="icon-btn" data-close="modal-keyboard" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label>Teclado K1</label>
+      <select id="kb-k1">
+        <option value="memory">Teclas de memoria [4x6]</option>
+        <option value="compact">Compacto [4x5]</option>
+      </select>
+      <label>Texto del bot&oacute;n personalizado</label>
+      <input type="text" id="kb-custom-label" maxlength="24">
+      <label>Teclado K2</label>
+      <select id="kb-k2">
+        <option value="func">Teclas de funci&oacute;n [4x5]</option>
+        <option value="compact">Compacto [4x3]</option>
+      </select>
+      <label>Teclado NAV</label>
+      <select id="kb-nav">
+        <option value="nav">Navegaci&oacute;n de texto [5x4]</option>
+        <option value="none">Desactivado</option>
+      </select>
+      <button class="btn-primary" id="kb-apply">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: NOVEDADES ======= -->
+<div id="modal-news" class="modal-wrap hidden no-print">
+  <div class="modal-card">
+    <div class="modal-head"><span>Novedades</span>
+      <button class="icon-btn" data-close="modal-news" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p><b>CalcTape Web 1.1 &mdash; Novedades</b></p>
+      <p>&bull; <b>Tema claro (Crisp Azure) por defecto</b>, como la app original; el icono de la barra cambia a oscuro.</p>
+      <p>&bull; <b>Comentarios con el teclado del sistema</b>: toca una l&iacute;nea o la pesta&ntilde;a ABC y escribe con Gboard; el teclado num&eacute;rico se esconde mientras escribes.</p>
+      <p>&bull; <b>Total en vivo en verde</b>: despu&eacute;s de cada entrada la cinta muestra el total acumulado.</p>
+      <p>&bull; <b>Bot&oacute;n flotante</b> abajo a la derecha: expande la cinta a pantalla completa.</p>
+      <p>&bull; <b>Panel de Temas</b>: Crisp Azure, Classic Copper, Vivid Indigo y Subtle Slate.</p>
+      <p>&bull; <b>Ajustes completos</b>: decimales, redondeo, separador de miles, teclados K1/K2/NAV, vibraci&oacute;n y sonido.</p>
+      <p>&bull; <b>Men&uacute; &#8942;</b>: Compartir, Imprimir, Copiar c&aacute;lculo (texto y HTML), Copiar total general, Editar teclado.</p>
+      <p>&bull; <b>M+ / M-</b> muestran el valor de memoria (+2,600.00 / &minus;2,600.00) y la tecla <b>=/&#9166;</b> ahora es azul.</p>
+      <button class="btn-primary" data-close="modal-news">Cerrar</button>
     </div>
   </div>
 </div>
@@ -348,17 +477,40 @@ var currentDocDate = '';
 var pendingSign = '+';
 var activeLineIndex = 0;
 var lineCounter = 2;
+/* Ajustes (v1.1). Los cuatro valores antiguos se mantienen como alias
+   para no romper el motor: roundingDecimals, darkMode, compactKeypad,
+   currentFontSize; syncLegacy() los mantiene al día con S. */
+var S = {
+  dark: false, theme: 'azure', showThemeBtn: true, hideFree: false,
+  fontSize: 14, showLines: false, lineColor: 'azul-claro', quickInsert: true, spell: false,
+  decimals: 2, rounding: false, thousands: true, indian: false, indent: 10,
+  memResult: false, autoDetect: true,
+  k1: 'memory', k2: 'func', nav: 'nav', horiz: 'right',
+  keyV: 'normal', keyH: 'small', keyFont: 20, modern: true, swipe: true,
+  vibrate: false, sound: false,
+  sort: 'date-asc', cursor: 'last', language: 'system',
+  customLabel: 'Botón personalizado'
+};
 var roundingDecimals = 2;
-var currentFontSize = 16;
-var darkMode = true;
+var currentFontSize = 14;
+var darkMode = false;
 var compactKeypad = false;
-var keypadTab = 0; /* 0 = K1, 1 = K2, 2 = ABC */
-var abcShift = false;
+var keypadTab = 0; /* 0 = K1, 1 = K2, 2 = NAV */
+var commentEditing = false;
+var tapeFull = false;
+var audioCtx = null;
 var memoryValue = 0;
 var savedHistories = [];
 var historyStack = [];
 var historyIndex = -1;
 var runningTotal = 0;
+
+function syncLegacy(){
+  roundingDecimals = S.decimals;
+  darkMode = S.dark;
+  compactKeypad = (S.k1 === 'compact');
+  currentFontSize = S.fontSize;
+}
 
 function $(id){ return document.getElementById(id); }
 
@@ -387,11 +539,18 @@ function showToast(msg){
 /* ---------- formato de números (EEUU: 1,234.56) ---------- */
 function formatNumber(num){
   if (num === null || num === undefined || isNaN(num)) return '0.00';
+  var locale = S.indian ? 'en-IN' : 'en-US';
   if (roundingDecimals === 'auto') {
-    return num.toLocaleString('en-US', { maximumFractionDigits: 6 });
+    return num.toLocaleString(locale, { maximumFractionDigits: 6, useGrouping: S.thousands });
   }
   var d = parseInt(roundingDecimals, 10);
-  return num.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  return num.toLocaleString(locale, { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: S.thousands });
+}
+function roundTotal(v){
+  if (!S.rounding || roundingDecimals === 'auto') return v;
+  var d = parseInt(roundingDecimals, 10);
+  var f = Math.pow(10, d);
+  return Math.round(v * f) / f;
 }
 
 /* ---------- recálculo de la cinta (motor verificado) ---------- */
@@ -399,6 +558,7 @@ function recalculateTape(){
   var total = 0;
   var variables = {};
   tapeLines.forEach(function(line){
+    if (line.live) { line.val = total; line.isTotal = false; return; }
     var text = (line.text || '').trim();
     if (text.indexOf('=') >= 0) {
       var parts = text.split('=');
@@ -435,6 +595,7 @@ function recalculateTape(){
         else if (op === '-') { total -= num; }
         else if (op === '*') { total *= num; }
         else if (op === '/') { if (num !== 0) total /= num; }
+        total = roundTotal(total);
         line.val = num;
       } else {
         line.val = 0;
@@ -460,6 +621,11 @@ function splitMainComment(text){
 }
 function splitLine(line){
   var raw = line.text || '';
+  if (line.live) {
+    var mc0 = splitMainComment(raw);
+    var lv = line.val || 0;
+    return { kind:'live', sign: (lv < 0 ? '-' : '+'), amount: Math.abs(lv), comment: mc0.comment };
+  }
   var mc = splitMainComment(raw);
   var main = mc.main, comment = mc.comment;
   if (main.charAt(0) === '=') {
@@ -502,18 +668,45 @@ function signedAmountFor(part){
 }
 
 /* ---------- render de la cinta (dos columnas) ---------- */
+function appendCursor(row){
+  var cmt = row.querySelector('.cmt');
+  var cur = document.createElement('span');
+  cur.className = 'cursor';
+  cur.textContent = '|';
+  if (cmt) cmt.appendChild(cur); else row.appendChild(cur);
+}
 function renderTape(){
+  ensureLiveLine();
   recalculateTape();
   var box = $('tape-lines');
   box.innerHTML = '';
+  box.classList.toggle('show-lines', !!S.showLines);
   if (tapeLines.length === 0) tapeLines.push({ id: lineCounter++, text: '', val: 0 });
   if (activeLineIndex < 0 || activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+  /* índice del último subtotal: lleva la doble raya */
+  var lastSub = -1;
+  tapeLines.forEach(function(l, i){ if (splitLine(l).kind === 'subtotal') lastSub = i; });
 
   tapeLines.forEach(function(line, index){
     var part = splitLine(line);
+    if (part.kind === 'live') {
+      var lrule = document.createElement('div');
+      lrule.className = 'rule';
+      box.appendChild(lrule);
+      var lrow = document.createElement('div');
+      lrow.className = 'trow' + (index === activeLineIndex ? ' active' : '');
+      lrow.dataset.idx = index;
+      lrow.innerHTML =
+        '<span class="sign">' + (part.sign === '-' ? '-' : '+') + '</span>' +
+        '<span class="amt' + (part.sign === '-' ? ' neg' : ' sub') + '">' + escapeHtml(formatNumber(part.amount)) + '</span>' +
+        '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
+      if (index === activeLineIndex) appendCursor(lrow);
+      box.appendChild(lrow);
+      return;
+    }
     if (part.kind === 'subtotal') {
       var rule = document.createElement('div');
-      rule.className = 'rule';
+      rule.className = (index === lastSub) ? 'rule-double' : 'rule';
       box.appendChild(rule);
       var row = document.createElement('div');
       row.className = 'trow' + (index === activeLineIndex ? ' active' : '');
@@ -521,13 +714,8 @@ function renderTape(){
       row.innerHTML =
         '<span class="sign">+</span>' +
         '<span class="amt sub">' + escapeHtml(formatNumber(part.amount)) + '</span>' +
-        '<span class="cmt"><input type="text" class="comment-input" inputmode="none" autocomplete="off" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
-      if (index === activeLineIndex) {
-        var cur = document.createElement('span');
-        cur.className = 'cursor';
-        cur.textContent = '|';
-        row.querySelector('.cmt').appendChild(cur);
-      }
+        '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
+      if (index === activeLineIndex) appendCursor(row);
       box.appendChild(row);
       return;
     }
@@ -535,18 +723,8 @@ function renderTape(){
       var trow = document.createElement('div');
       trow.className = 'trow text-row' + (index === activeLineIndex ? ' active' : '');
       trow.dataset.idx = index;
-      trow.textContent = part.text === '' ? '' : part.text;
-      if (part.text === '') {
-        var c0 = document.createElement('span');
-        c0.className = 'cursor';
-        c0.textContent = '|';
-        trow.appendChild(c0);
-      } else if (index === activeLineIndex) {
-        var c1 = document.createElement('span');
-        c1.className = 'cursor';
-        c1.textContent = '|';
-        trow.appendChild(c1);
-      }
+      trow.innerHTML = '<input type="text" class="comment-input text-line-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.text) + '" aria-label="Texto">';
+      if (index === activeLineIndex) appendCursor(trow);
       box.appendChild(trow);
       return;
     }
@@ -557,7 +735,8 @@ function renderTape(){
       orow.innerHTML =
         '<span class="sign">' + escapeHtml(part.sign) + '</span>' +
         '<span class="amt"></span>' +
-        '<span class="cmt">' + (index === activeLineIndex ? '<span class="cursor">|</span>' : '') + '</span>';
+        '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="" aria-label="Comentario"></span>';
+      if (index === activeLineIndex) appendCursor(orow);
       box.appendChild(orow);
       return;
     }
@@ -570,28 +749,14 @@ function renderTape(){
     arow.innerHTML =
       '<span class="sign">' + escapeHtml(part.sign) + '</span>' +
       '<span class="amt' + (neg ? ' neg' : '') + '">' + escapeHtml(formatNumber(amt)) + '</span>' +
-      '<span class="cmt"><input type="text" class="comment-input" inputmode="none" autocomplete="off" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
-    if (index === activeLineIndex) {
-      var cu = document.createElement('span');
-      cu.className = 'cursor';
-      cu.textContent = '|';
-      arow.querySelector('.cmt').appendChild(cu);
-    }
+      '<span class="cmt"><input type="text" class="comment-input" autocomplete="off" autocapitalize="off" spellcheck="' + (S.spell ? 'true' : 'false') + '" data-idx="' + index + '" value="' + escapeHtml(part.comment) + '" aria-label="Comentario"></span>';
+    if (index === activeLineIndex) appendCursor(arow);
     box.appendChild(arow);
   });
 
-  /* fila del total final: doble raya */
-  var dbl = document.createElement('div');
-  dbl.className = 'rule-double';
-  box.appendChild(dbl);
-  var frow = document.createElement('div');
-  frow.className = 'trow';
-  var totNeg = runningTotal < 0;
-  frow.innerHTML =
-    '<span class="sign">' + (totNeg ? '-' : '+') + '</span>' +
-    '<span class="amt' + (totNeg ? ' neg' : ' sub') + '">' + escapeHtml(formatNumber(Math.abs(runningTotal))) + '</span>' +
-    '<span class="cmt">a favor</span>';
-  box.appendChild(frow);
+  /* La original NO añade una fila final "a favor": el último total en vivo
+     es la última línea de la cinta. "a favor" se escribe como comentario
+     de la línea de subtotal que crea = . */
 
   /* fila fantasma: tocar el espacio vacío crea una línea nueva */
   var last = tapeLines[tapeLines.length - 1];
@@ -650,20 +815,35 @@ function wireTapeRows(){
   var inputs = document.querySelectorAll('.comment-input');
   inputs.forEach(function(inp){
     var idx = parseInt(inp.dataset.idx, 10);
+    if (inp.classList.contains('text-line-input')) {
+      inp.addEventListener('focus', function(){ setActiveLine(idx); enterCommentMode(); });
+      inp.addEventListener('input', function(){
+        var line = tapeLines[idx]; if (!line) return;
+        line.text = inp.value;
+        saveToLocalStorage();
+      });
+      inp.addEventListener('blur', function(){ saveHistoryState(); exitCommentMode(); renderTape(); });
+      inp.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
+      });
+      inp.addEventListener('paste', function(e){ handleTapePaste(e, idx); });
+      return;
+    }
     inp.addEventListener('focus', function(){
       setActiveLine(idx);
-      keypadTab = 2;
-      renderKeypad();
+      enterCommentMode();
     });
     inp.addEventListener('input', function(){
       updateComment(idx, inp.value, false);
     });
     inp.addEventListener('blur', function(){
       updateComment(idx, inp.value, true);
+      exitCommentMode();
     });
     inp.addEventListener('keydown', function(e){
       if (e.key === 'Enter') { e.preventDefault(); inp.blur(); startNewLine(); }
     });
+    inp.addEventListener('paste', function(e){ handleTapePaste(e, idx); });
   });
 }
 
@@ -690,6 +870,31 @@ function setActiveLine(idx){
   }
 }
 
+/* Una sola línea de total en vivo, justo tras la última entrada numérica.
+   Se recalcula en cada render: si la última entrada va seguida de un
+   subtotal, no se pone (el subtotal ya muestra el total). El comentario
+   que el usuario escriba en la línea en vivo se conserva. */
+function ensureLiveLine(){
+  var keepComment = '';
+  var wasActive = false;
+  for (var i = tapeLines.length - 1; i >= 0; i--) {
+    if (tapeLines[i].live) {
+      var c = splitMainComment(tapeLines[i].text).comment;
+      if (c) keepComment = c;
+      if (i === activeLineIndex) wasActive = true;
+      tapeLines.splice(i, 1);
+      if (i < activeLineIndex) activeLineIndex--;
+    }
+  }
+  var lastAmt = -1;
+  tapeLines.forEach(function(l, i){ if (splitLine(l).kind === 'amount') lastAmt = i; });
+  if (lastAmt < 0) return;
+  var next = tapeLines[lastAmt + 1];
+  if (next && splitLine(next).kind === 'subtotal') return;
+  tapeLines.splice(lastAmt + 1, 0, { id: lineCounter++, text: (keepComment ? '~ # ' + keepComment : '~'), val: 0, live: true });
+  if (wasActive) activeLineIndex = lastAmt + 1;
+}
+
 function startNewLine(){
   var last = tapeLines[tapeLines.length - 1];
   if (last && (last.text || '').trim() === '') {
@@ -704,51 +909,64 @@ function startNewLine(){
 }
 
 /* ---------- teclado: K1 / K2 / ABC ---------- */
+/* ---------- teclado: K1 / K2 / NAV ----------
+   La pestaña ABC ya no es un teclado QWERTY propio: significa "pasar al
+   teclado del sistema" (focusCommentInput). La navegación de texto vive
+   en el teclado NAV [5x4] de la original. */
+function memKey(label, which){
+  var sub = '';
+  if (memoryValue) {
+    sub = (which === 'M+' ? '+' : '−') + formatNumber(memoryValue);
+  }
+  var k = { l: label, a: 'mem', v: which, c: 'fn' };
+  if (sub) k.sub = sub;
+  return k;
+}
+function k2Rows(){
+  var F = function(l, a, v, c){ return { l:l, a:a, v:(v === undefined ? l : v), c:(c || 'fn') }; };
+  var rows = [
+    [ F('+ IVA','tax',8.5), F('− IVA','tax',-8.5), F('Nota','comment'), F('Var','var') ],
+    [ memKey('M+','M+'), memKey('M-','M-'), F('MR','mem','MR'), F('MC','mem','MC') ],
+    [ F('C','clearline'), F('AC','clear',null,'danger'), F('⌫','back',null,'back'), F('Subtotal','subtotal',null,'op') ]
+  ];
+  if (S.k2 === 'func') {
+    rows.push(
+      [ F('%','op','%'), F('x²','pow2'), F('√','sqrt'), F('1/x','recip') ],
+      [ F('Ans','ans'), F('π','const', Math.PI), F('e','const', Math.E), F('±','negate') ]
+    );
+  }
+  return rows;
+}
+function navRows(){
+  var N = function(l, a, v, c){ return { l:l, a:a, v:(v === undefined ? l : v), c:(c || 'fn') }; };
+  return [
+    [ N('Inicio','nav','home'), N('↑','nav','up'), N('↓','nav','down'), N('Fin','nav','end'), N('⌫','back',null,'back') ],
+    [ N('←','nav','left'), N('→','nav','right'), N('Sel.','nav','select'), N('Copiar','nav','copy'), N('Pegar','nav','paste') ],
+    [ N('Cortar','nav','cut'), N('Deshacer','nav','undo'), N('Rehacer','nav','redo'), N('Borrar','nav','delete'), N('↵','nav','enter') ],
+    [ N('K1','nav','k1'), N('K2','nav','k2'), N('ABC','nav','abc'), N('C','clearline'), N('AC','clear',null,'danger') ]
+  ];
+}
 function keypadRows(){
-  if (keypadTab === 1) {
-    return [
-      [ {l:'+ IVA', a:'tax', v:8.5, c:'fn'}, {l:'− IVA', a:'tax', v:-8.5, c:'fn'}, {l:'Nota', a:'comment', c:'fn'}, {l:'Var', a:'var', c:'fn'} ],
-      [ {l:'M+', a:'mem', v:'M+', c:'fn'}, {l:'M-', a:'mem', v:'M-', c:'fn'}, {l:'MR', a:'mem', v:'MR', c:'fn'}, {l:'MC', a:'mem', v:'MC', c:'fn'} ],
-      [ {l:'C', a:'clearline', c:'fn'}, {l:'AC', a:'clear', c:'danger'}, {l:'⌫', a:'back', c:'back'}, {l:'Subtotal', a:'subtotal', c:'op'} ]
-    ];
-  }
-  if (keypadTab === 2) {
-    var rows = [];
-    var letter = function(ch){
-      var label = abcShift ? ch.toUpperCase() : ch;
-      return { l: label, a:'letter', v: label, c:'abc', w: 1 };
-    };
-    rows.push('qwertyuiop'.split('').map(letter));
-    rows.push('asdfghjklñ'.split('').map(letter));
-    var r3 = [{ l:'⇧', a:'shift', c: abcShift ? 'shift-on' : 'fn', w: 1.5 }];
-    'zxcvbnm'.split('').forEach(function(ch){ r3.push(letter(ch)); });
-    r3.push({ l:'⌫', a:'abcback', c:'back', w: 1.5 });
-    rows.push(r3);
-    rows.push([
-      { l:'123', a:'abcexit', c:'fn', w: 1.5 },
-      { l:'Espacio', a:'letter', v:' ', c:'abc', w: 5 },
-      { l:'.', a:'letter', v:'.', c:'abc', w: 1.5 },
-      { l:'↵', a:'abcexit', c:'op', w: 2 }
-    ]);
-    return rows;
-  }
+  if (keypadTab === 1) return k2Rows();
+  if (keypadTab === 2) return navRows();
   var K = function(l, a, v, c){ return { l:l, a:a, v:(v === undefined ? l : v), c:(c || '') }; };
+  var customBtn = S.quickInsert ? [ { l: S.customLabel, a:'comment', c:'fn-small' } ] : [];
   if (compactKeypad) {
     return [
       [ K('AC','clear',null,'danger'), K('⌫','back',null,'back'), K('MR','mem','MR','fn'), K('÷','op','/','op') ],
       [ K('7','digit'), K('8','digit'), K('9','digit'), K('×','op','*','op') ],
       [ K('4','digit'), K('5','digit'), K('6','digit'), K('−','op','-','op') ],
       [ K('1','digit'), K('2','digit'), K('3','digit'), K('+','op','+','op') ],
-      [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), K('=','equal',null,'op') ]
+      [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), { l:'=/↵', a:'equal', c:'eq' } ]
     ];
   }
   return [
-    [ K('AC','clear',null,'danger'), K('⌫','back',null,'back'), K('MR','mem','MR','fn'), { l:'Botón personalizado', a:'comment', c:'fn-small' } ],
-    [ K('M+','mem','M+','fn'), K('M-','mem','M-','fn'), K('MC','mem','MC','fn'), K('÷','op','/','op') ],
+    [ K('AC','clear',null,'danger'), K('⌫','back',null,'back'), K('MR','mem','MR','fn') ].concat(customBtn),
+    [ memKey('M+','M+'), memKey('M-','M-'), K('MC','mem','MC','fn'), K('÷','op','/','op') ],
     [ K('7','digit'), K('8','digit'), K('9','digit'), K('×','op','*','op') ],
     [ K('4','digit'), K('5','digit'), K('6','digit'), K('−','op','-','op') ],
     [ K('1','digit'), K('2','digit'), K('3','digit'), K('+','op','+','op') ],
-    [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), K('=','equal',null,'op') ]
+    [ K('0','digit'), K('.','decimal'), K('%','op','%','fn'), { l:'=/↵', a:'equal', c:'eq' } ]
   ];
 }
 
@@ -761,8 +979,12 @@ function renderKeypad(){
     row.forEach(function(k){
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'key' + (k.c ? ' ' + k.c : '');
-      b.textContent = k.l;
+      b.className = 'key' + (k.c ? ' ' + k.c : '') + (k.sub ? ' has-sub' : '');
+      if (k.sub) {
+        b.innerHTML = '<span>' + escapeHtml(k.l) + '</span><span class="sub">' + escapeHtml(k.sub) + '</span>';
+      } else {
+        b.textContent = k.l;
+      }
       if (k.w) b.style.flexGrow = k.w;
       b.addEventListener('click', function(){ onKeyPress(k); });
       r.appendChild(b);
@@ -770,14 +992,31 @@ function renderKeypad(){
     kp.appendChild(r);
   });
   var tabBtn = $('vb-tab');
-  tabBtn.textContent = keypadTab === 1 ? 'K2' : 'K1';
-  tabBtn.classList.toggle('off', keypadTab === 2);
+  tabBtn.textContent = keypadTab === 1 ? 'K2' : (keypadTab === 2 ? 'NAV' : 'K1');
+  tabBtn.classList.toggle('off', commentEditing);
   var abcBtn = $('vb-abc');
-  abcBtn.classList.toggle('off', keypadTab !== 2);
+  abcBtn.classList.toggle('off', !commentEditing);
 }
 
 /* ---------- acciones del teclado ---------- */
+function beep(){
+  if (!S.sound) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.04);
+  } catch(e){}
+}
 function onKeyPress(k){
+  if (S.vibrate && navigator.vibrate) { try { navigator.vibrate(10); } catch(e){} }
+  beep();
   switch (k.a) {
     case 'digit': pressDigit(k.v); break;
     case 'decimal': pressDecimal(); break;
@@ -788,13 +1027,16 @@ function onKeyPress(k){
     case 'back': backspace(); break;
     case 'mem': memoryAction(k.v); break;
     case 'tax': applyTax(k.v); break;
-    case 'comment': insertCommentPrompt(); break;
+    case 'comment': focusCommentInput(); break;
     case 'var': insertVariablePrompt(); break;
     case 'subtotal': insertSubtotalLine(); break;
-    case 'letter': insertLetterToComment(k.v); break;
-    case 'shift': abcShift = !abcShift; renderKeypad(); break;
-    case 'abcback': backspaceComment(); break;
-    case 'abcexit': keypadTab = 0; renderKeypad(); break;
+    case 'pow2': transformActiveLine(function(v){ return v * v; }); break;
+    case 'sqrt': transformActiveLine(function(v){ return v < 0 ? NaN : Math.sqrt(v); }); break;
+    case 'recip': transformActiveLine(function(v){ return v === 0 ? NaN : 1 / v; }); break;
+    case 'ans': insertConstLine(runningTotal); break;
+    case 'const': insertConstLine(k.v); break;
+    case 'negate': negateActiveLine(); break;
+    case 'nav': navAction(k.v); break;
   }
 }
 
@@ -802,7 +1044,7 @@ function digitTargetIndex(){
   var i = activeLineIndex;
   if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
   var kind = splitLine(tapeLines[i]).kind;
-  if (kind === 'subtotal' || kind === 'text') {
+  if (kind === 'subtotal' || kind === 'text' || kind === 'live') {
     tapeLines.push({ id: lineCounter++, text: '', val: 0 });
     activeLineIndex = tapeLines.length - 1;
     return activeLineIndex;
@@ -960,6 +1202,7 @@ function clearAll(){
 function applyTax(p){
   var sign = p > 0 ? '+' : '';
   tapeLines.push({ id: lineCounter++, text: sign + p + '% # IVA (' + p + '%)', val: 0 });
+  tapeLines.push({ id: lineCounter++, text: '', val: 0 });
   activeLineIndex = tapeLines.length - 1;
   saveHistoryState();
   renderTape();
@@ -975,6 +1218,8 @@ function updateComment(index, newComment, commit){
     line.text = clean;
   } else if (part.kind === 'subtotal') {
     line.text = '= ' + (clean || 'Total');
+  } else if (part.kind === 'live') {
+    line.text = '~' + (clean ? ' # ' + clean : '');
   } else {
     var main = splitMainComment(line.text).main;
     if (main === '') {
@@ -993,70 +1238,184 @@ function updateComment(index, newComment, commit){
   if (inp && inp.value !== clean) inp.value = clean;
 }
 
-function insertLetterToComment(letter){
-  var i = activeLineIndex;
-  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
-  var line = tapeLines[i];
-  var part = splitLine(line);
-  if (part.kind === 'subtotal') {
-    tapeLines.push({ id: lineCounter++, text: letter, val: 0 });
-    activeLineIndex = tapeLines.length - 1;
-    renderTape();
-    return;
-  }
-  if (part.kind === 'text') {
-    line.text = (line.text + letter).replace(/\s{2,}/g, ' ');
-    saveToLocalStorage();
-    saveHistoryState();
-    renderTape();
-    if (abcShift) { abcShift = false; renderKeypad(); }
-    return;
-  }
-  var mc = splitMainComment(line.text);
-  var next = (mc.comment + letter).replace(/\s{2,}/g, ' ');
-  updateComment(i, next, false);
-  saveHistoryState();
-  var inp = document.querySelector('.comment-input[data-idx="' + i + '"]');
-  if (inp) inp.value = mc.comment + letter;
-  if (abcShift) { abcShift = false; renderKeypad(); }
+/* ---------- edición de comentarios con el TECLADO DEL SISTEMA ----------
+   El teclado del sistema (Gboard) se abre enfocando el <input> real de
+   la línea; mientras está enfocado, el teclado numérico de la app se
+   esconde. La pestaña ABC = ir al teclado del sistema. */
+function enterCommentMode(){
+  commentEditing = true;
+  document.getElementById('app').classList.add('comment-editing');
+  $('keypad').classList.add('kbd-hidden');
+  renderKeypad();
 }
-
-function backspaceComment(){
-  var i = activeLineIndex;
-  if (i < 0 || i >= tapeLines.length) return;
-  var part = splitLine(tapeLines[i]);
-  if (part.kind === 'text') {
-    tapeLines[i].text = tapeLines[i].text.slice(0, -1);
-    saveHistoryState();
-    renderTape();
+function exitCommentMode(){
+  commentEditing = false;
+  document.getElementById('app').classList.remove('comment-editing');
+  if (!tapeFull) $('keypad').classList.remove('kbd-hidden');
+  renderKeypad();
+}
+function blurActiveInput(){
+  var a = document.activeElement;
+  if (a && a.blur) a.blur();
+}
+function focusCommentInput(){
+  var idx = activeLineIndex;
+  if (idx < 0 || idx >= tapeLines.length) idx = tapeLines.length - 1;
+  var inp = document.querySelector('.comment-input[data-idx="' + idx + '"]');
+  if (inp) {
+    inp.focus();
+    if (inp.scrollIntoView) inp.scrollIntoView({ block: 'nearest' });
     return;
   }
-  var mc = splitMainComment(tapeLines[i].text);
-  if (mc.comment !== '') {
-    var next = mc.comment.slice(0, -1);
-    updateComment(i, next, false);
-    saveHistoryState();
-    var inp = document.querySelector('.comment-input[data-idx="' + i + '"]');
-    if (inp) inp.value = next;
-  } else {
-    backspace();
-  }
+  startNewLine();
+  var inp2 = document.querySelector('.comment-input[data-idx="' + activeLineIndex + '"]');
+  if (inp2) inp2.focus();
 }
-
-function insertCommentPrompt(){
-  var note = prompt('Ingrese nota o descripción para la línea:');
-  if (note === null || note.trim() === '') return;
-  var i = activeLineIndex;
-  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
-  var part = splitLine(tapeLines[i]);
-  if (part.kind === 'subtotal') {
-    tapeLines.push({ id: lineCounter++, text: note.trim(), val: 0 });
-    activeLineIndex = tapeLines.length - 1;
-  } else {
-    updateComment(i, (splitMainComment(tapeLines[i].text).comment + ' ' + note.trim()).trim(), false);
+function handleTapePaste(e, idx){
+  if (!S.autoDetect) return;
+  var text = '';
+  try { text = (e.clipboardData || window.clipboardData).getData('text') || ''; } catch(err){}
+  var m = text.match(/([+-]?[\d,]+\.?\d*)/);
+  if (!m) return;
+  e.preventDefault();
+  var num = m[1];
+  var rest = text.replace(m[0], '').replace(/\s+/g, ' ').trim();
+  var newIdx = idx + 1;
+  tapeLines.splice(newIdx, 0, { id: lineCounter++, text: (pendingSign + ' ' + num), val: 0 });
+  activeLineIndex = newIdx;
+  if (rest) {
+    var line = tapeLines[idx];
+    var mc = splitMainComment(line.text);
+    updateComment(idx, (mc.comment ? mc.comment + ' ' : '') + rest, false);
   }
   saveHistoryState();
   renderTape();
+}
+
+/* ---------- funciones del teclado K2 ---------- */
+function transformActiveLine(fn){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) return;
+  var line = tapeLines[i];
+  var part = splitLine(line);
+  if (part.kind !== 'amount') { showToast('Primero activa una línea con un número'); return; }
+  var v = part.amount;
+  if (part.sign === '-') v = -v;
+  var out = fn(v);
+  if (out === null || isNaN(out) || !isFinite(out)) { showToast('Operación no válida'); return; }
+  var outNum = parseFloat(out.toFixed(8));
+  var suffix = part.comment ? ' # ' + part.comment : '';
+  if (part.sign === '+' || part.sign === '-') {
+    line.text = (out < 0 ? '-' : '+') + ' ' + Math.abs(outNum) + suffix;
+  } else {
+    line.text = part.sign + ' ' + String(outNum) + suffix;
+  }
+  saveHistoryState();
+  renderTape();
+}
+function insertConstLine(value){
+  var v = Number(value);
+  if (isNaN(v)) return;
+  var sign = v < 0 ? '-' : '+';
+  tapeLines.push({ id: lineCounter++, text: sign + ' ' + Math.abs(v), val: Math.abs(v) });
+  tapeLines.push({ id: lineCounter++, text: '', val: 0 });
+  activeLineIndex = tapeLines.length - 1;
+  pendingSign = '+';
+  saveHistoryState();
+  renderTape();
+}
+function negateActiveLine(){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) return;
+  var line = tapeLines[i];
+  var part = splitLine(line);
+  if (part.kind !== 'amount') return;
+  var mc = splitMainComment(line.text);
+  var m = mc.main.match(/^([+\-*/%×÷])\s*(.*)$/);
+  if (!m) return;
+  var op = m[1], rest = (m[2] || '').trim();
+  var suffix = mc.comment ? ' # ' + mc.comment : '';
+  if (op === '+' || op === '-') {
+    line.text = (op === '-' ? '+' : '-') + ' ' + rest + suffix;
+  } else {
+    line.text = op + ' ' + (rest.charAt(0) === '-' ? rest.slice(1) : '-' + rest) + suffix;
+  }
+  saveHistoryState();
+  renderTape();
+}
+
+/* ---------- acciones del teclado NAV [5x4] ---------- */
+function navAction(which){
+  var i = activeLineIndex;
+  if (i < 0 || i >= tapeLines.length) i = tapeLines.length - 1;
+  switch (which) {
+    case 'home': activeLineIndex = 0; renderTape(); break;
+    case 'end': activeLineIndex = tapeLines.length - 1; renderTape(); break;
+    case 'up': activeLineIndex = Math.max(0, i - 1); renderTape(); break;
+    case 'down': activeLineIndex = Math.min(tapeLines.length - 1, i + 1); renderTape(); break;
+    case 'left': case 'right': {
+      var inp = document.activeElement;
+      if (inp && inp.classList && inp.classList.contains('comment-input')) {
+        var pos = inp.selectionStart || 0;
+        var next = which === 'left' ? Math.max(0, pos - 1) : Math.min(inp.value.length, pos + 1);
+        inp.setSelectionRange(next, next);
+      } else {
+        activeLineIndex = which === 'left' ? Math.max(0, i - 1) : Math.min(tapeLines.length - 1, i + 1);
+        renderTape();
+      }
+      break;
+    }
+    case 'select': {
+      var sinp = document.querySelector('.comment-input[data-idx="' + i + '"]');
+      if (sinp) { sinp.focus(); sinp.select(); }
+      break;
+    }
+    case 'copy': {
+      var ctext = tapePlainText(tapeLines[i]);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ctext).then(function(){ showToast('Línea copiada'); }, function(){ fallbackCopy(ctext); showToast('Línea copiada'); });
+      } else { fallbackCopy(ctext); showToast('Línea copiada'); }
+      break;
+    }
+    case 'paste': {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(function(t){
+          if (!t) return;
+          tapeLines.push({ id: lineCounter++, text: String(t).split('\n')[0] || '', val: 0 });
+          activeLineIndex = tapeLines.length - 1;
+          saveHistoryState();
+          renderTape();
+        }, function(){ showToast('No se pudo leer el portapapeles'); });
+      } else { showToast('Pegar no disponible en este navegador'); }
+      break;
+    }
+    case 'cut': {
+      var cutText = tapePlainText(tapeLines[i]);
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cutText).catch(function(){});
+      if (tapeLines.length > 1) {
+        tapeLines.splice(i, 1);
+        if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+        saveHistoryState();
+        renderTape();
+      }
+      break;
+    }
+    case 'undo': undo(); break;
+    case 'redo': redo(); break;
+    case 'delete': {
+      if (tapeLines.length > 1) {
+        tapeLines.splice(i, 1);
+        if (activeLineIndex >= tapeLines.length) activeLineIndex = tapeLines.length - 1;
+        saveHistoryState();
+        renderTape();
+      }
+      break;
+    }
+    case 'enter': startNewLine(); break;
+    case 'k1': keypadTab = 0; renderKeypad(); break;
+    case 'k2': keypadTab = 1; renderKeypad(); break;
+    case 'abc': focusCommentInput(); break;
+  }
 }
 
 function insertVariablePrompt(){
@@ -1076,7 +1435,7 @@ function insertVariablePrompt(){
 
 /* ---------- memoria ---------- */
 function memoryAction(which){
-  if (which === 'MC') { memoryValue = 0; showToast('Memoria borrada'); return; }
+  if (which === 'MC') { memoryValue = 0; showToast('Memoria borrada'); renderKeypad(); return; }
   if (which === 'MR') {
     var s = String(memoryValue);
     for (var k = 0; k < s.length; k++) {
@@ -1085,9 +1444,19 @@ function memoryAction(which){
     }
     return;
   }
-  var lastVal = tapeLines.length > 0 ? (tapeLines[tapeLines.length - 1].val || 0) : 0;
+  /* M+/M- usa el resultado: el total acumulado. Si está OFF, usa el
+     valor de la línea del cursor (no de la última línea). */
+  var lastVal = 0;
+  if (S.memResult) {
+    lastVal = runningTotal;
+  } else if (activeLineIndex >= 0 && activeLineIndex < tapeLines.length) {
+    lastVal = tapeLines[activeLineIndex].val || 0;
+  } else if (tapeLines.length > 0) {
+    lastVal = tapeLines[tapeLines.length - 1].val || 0;
+  }
   if (which === 'M+') { memoryValue += lastVal; showToast('M+ (' + formatNumber(memoryValue) + ')'); }
   if (which === 'M-') { memoryValue -= lastVal; showToast('M- (' + formatNumber(memoryValue) + ')'); }
+  renderKeypad();
 }
 
 /* ---------- deshacer / rehacer ---------- */
@@ -1153,31 +1522,253 @@ function loadFromLocalStorage(){
   tapeLines.forEach(function(l){ if (l.id > maxId) maxId = l.id; });
   lineCounter = maxId + 1;
 }
+var THEMES = {
+  azure: { label: 'Crisp Azure', accent: '#2F9BE8' },
+  copper: { label: 'Classic Copper', accent: '#D08A4B' },
+  indigo: { label: 'Vivid Indigo', accent: '#7C6CF0' },
+  slate: { label: 'Subtle Slate', accent: '#9AA7B4' }
+};
+/* Ajustes v1.1: se guardan como un solo objeto JSON en calctape_settings.
+   Se migra el formato antiguo {decimals, dark, compact, fontSize}. */
 function loadSettings(){
   var raw = lsGet('calctape_settings');
-  if (!raw) return;
-  try {
-    var s = JSON.parse(raw);
-    if (s.decimals !== undefined) roundingDecimals = s.decimals;
-    if (s.dark !== undefined) darkMode = !!s.dark;
-    if (s.compact !== undefined) compactKeypad = !!s.compact;
-    if (s.fontSize !== undefined) currentFontSize = s.fontSize;
-  } catch(e){}
+  if (raw) {
+    try {
+      var s = JSON.parse(raw);
+      if (s && typeof s === 'object') {
+        Object.keys(S).forEach(function(k){ if (s[k] !== undefined) S[k] = s[k]; });
+        if (s.compact !== undefined) S.k1 = s.compact ? 'compact' : 'memory';
+      }
+    } catch(e){}
+  }
+  syncLegacy();
 }
 function saveSettings(){
-  lsSet('calctape_settings', JSON.stringify({ decimals: roundingDecimals, dark: darkMode, compact: compactKeypad, fontSize: currentFontSize }));
+  syncLegacy();
+  lsSet('calctape_settings', JSON.stringify(S));
+}
+function lineColorValue(name, dark){
+  if (name === 'gris') return dark ? '#6B7280' : '#9CA3AF';
+  if (name === 'verde') return dark ? '#059669' : '#86EFAC';
+  if (name === 'rojo') return dark ? '#DC2626' : '#FCA5A5';
+  return dark ? '#7C8DA0' : '#CBD5E1'; /* azul claro */
 }
 function applySettings(){
-  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  syncLegacy();
+  var root = document.documentElement;
+  root.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  root.setAttribute('data-accent', S.theme || 'azure');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', darkMode ? '#0E1824' : '#FFFFFF');
+  var moon = $('ic-moon'), sun = $('ic-sun');
+  if (moon) moon.classList.toggle('hidden', darkMode);
+  if (sun) sun.classList.toggle('hidden', !darkMode);
+  var badge = document.querySelector('.free-badge');
+  if (badge) badge.style.display = S.hideFree ? 'none' : '';
+  var themeBtn = $('btn-theme');
+  if (themeBtn) themeBtn.style.display = S.showThemeBtn ? '' : 'none';
   $('tape-lines').style.fontSize = currentFontSize + 'px';
-  var lbl = $('lbl-font-size');
-  if (lbl) lbl.textContent = currentFontSize + 'px';
-  var dec = $('set-decimals');
-  if (dec) dec.value = String(roundingDecimals);
-  $('set-dark').classList.toggle('on', darkMode);
-  $('set-light').classList.toggle('on', !darkMode);
-  $('set-compact-on').classList.toggle('on', compactKeypad);
-  $('set-compact-off').classList.toggle('on', !compactKeypad);
+  root.style.setProperty('--tape-indent', S.indent + 'px');
+  root.style.setProperty('--key-h', (S.keyV === 'small' ? 44 : S.keyV === 'large' ? 60 : 52) + 'px');
+  root.style.setProperty('--key-font', S.keyFont + 'px');
+  root.style.setProperty('--app-max', (S.keyH === 'small' ? 420 : S.keyH === 'large' ? 640 : 520) + 'px');
+  root.style.setProperty('--rule', lineColorValue(S.lineColor, darkMode));
+  document.getElementById('app').classList.toggle('classic', !S.modern);
+  document.getElementById('app').classList.toggle('layout-right', S.horiz === 'right');
+  document.querySelectorAll('.comment-input').forEach(function(inp){
+    inp.setAttribute('spellcheck', S.spell ? 'true' : 'false');
+  });
+  renderThemeGrid();
+}
+function renderThemeGrid(){
+  var grid = $('theme-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.keys(THEMES).forEach(function(name){
+    var th = THEMES[name];
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'theme-card' + (S.theme === name ? ' selected' : '');
+    var prev = document.createElement('div');
+    prev.className = 'theme-preview';
+    prev.setAttribute('data-t', name);
+    prev.innerHTML =
+      '<div class="tp-bar"></div>' +
+      '<div class="tp-line"></div><div class="tp-line l2"></div>' +
+      '<div class="tp-keys"><span></span><span></span><span></span><span class="eq"></span><span></span><span></span><span></span><span class="eq"></span></div>';
+    var nm = document.createElement('div');
+    nm.className = 'tp-name';
+    nm.textContent = th.label;
+    card.appendChild(prev);
+    card.appendChild(nm);
+    card.addEventListener('click', function(){
+      S.theme = name;
+      saveSettings();
+      applySettings();
+      renderThemeGrid();
+      renderKeypad();
+    });
+    grid.appendChild(card);
+  });
+}
+function openThemes(){ renderThemeGrid(); openModal('modal-themes'); }
+
+/* ---------- pantalla de Ajustes ---------- */
+var SETTINGS_SCHEMA = [
+  { section: 'Apariencia', rows: [
+    { label: 'Diseño', type: 'select', options: [['moderno', 'Moderno'], ['clasico', 'Clásico']],
+      get: function(){ return S.modern ? 'moderno' : 'clasico'; },
+      set: function(v){ S.modern = (v === 'moderno'); } },
+    { label: 'Temas', type: 'action', valueText: function(){ return THEMES[S.theme].label; },
+      action: function(){ closeModal('modal-settings'); openThemes(); } },
+    { label: 'Claro/Oscuro', type: 'select', options: [['light', 'Claro'], ['dark', 'Oscuro']],
+      get: function(){ return S.dark ? 'dark' : 'light'; },
+      set: function(v){ S.dark = (v === 'dark'); } },
+    { label: 'Botón de tema en la barra de título', desc: 'La paleta del tema actual; un toque cambia de tema.', type: 'toggle',
+      get: function(){ return S.showThemeBtn; }, set: function(v){ S.showThemeBtn = v; } },
+    { label: 'Ocultar [✧ FREE] en la barra de título', desc: 'La marca se mantiene en la pantalla de información.', type: 'toggle',
+      get: function(){ return S.hideFree; }, set: function(v){ S.hideFree = v; } }
+  ]},
+  { section: 'Cinta de cálculo', rows: [
+    { label: 'Tamaño de fuente de la cinta', type: 'select', options: [['12','12'],['14','14'],['16','16'],['18','18'],['20','20'],['24','24']],
+      get: function(){ return S.fontSize; }, set: function(v){ S.fontSize = parseInt(v, 10); } },
+    { label: 'Mostrar líneas', desc: 'Una línea tenue entre las filas de la cinta.', type: 'toggle',
+      get: function(){ return S.showLines; }, set: function(v){ S.showLines = v; } },
+    { label: 'Color de línea', type: 'select', options: [['azul-claro','Azul claro'],['gris','Gris'],['verde','Verde'],['rojo','Rojo']],
+      get: function(){ return S.lineColor; }, set: function(v){ S.lineColor = v; } },
+    { label: 'Botón de inserción rápida', desc: 'Muestra el botón personalizado en el teclado K1.', type: 'toggle',
+      get: function(){ return S.quickInsert; }, set: function(v){ S.quickInsert = v; } },
+    { label: 'Corrector ortográfico', desc: 'Revisión de ortografía en los comentarios.', type: 'toggle',
+      get: function(){ return S.spell; }, set: function(v){ S.spell = v; } }
+  ]},
+  { section: 'Cálculo', rows: [
+    { label: 'Decimales', type: 'select', options: [['0','0'],['2','2'],['4','4'],['auto','Automático']],
+      get: function(){ return S.decimals; }, set: function(v){ S.decimals = (v === 'auto') ? 'auto' : parseInt(v, 10); } },
+    { label: 'Redondeo', desc: 'Redondea el total acumulado a los decimales elegidos.', type: 'toggle',
+      get: function(){ return S.rounding; }, set: function(v){ S.rounding = v; } },
+    { label: 'Separador de miles', type: 'toggle',
+      get: function(){ return S.thousands; }, set: function(v){ S.thousands = v; } },
+    { label: 'Agrupación de dígitos india', desc: 'Estilo indio: 1,00,000 en lugar de 100,000.', type: 'toggle',
+      get: function(){ return S.indian; }, set: function(v){ S.indian = v; } },
+    { label: 'Sangría', type: 'select', options: [['0','0'],['5','5'],['10','10'],['20','20']],
+      get: function(){ return S.indent; }, set: function(v){ S.indent = parseInt(v, 10); } },
+    { label: 'M+/M- usa el resultado (total acumulado)', desc: 'Si está OFF, M+/M- usa el valor de la línea del cursor.', type: 'toggle',
+      get: function(){ return S.memResult; }, set: function(v){ S.memResult = v; } },
+    { label: 'Detección automática de números', desc: 'Al pegar texto con números, los números se convierten en líneas de cálculo.', type: 'toggle',
+      get: function(){ return S.autoDetect; }, set: function(v){ S.autoDetect = v; } }
+  ]},
+  { section: 'Teclado', rows: [
+    { label: 'Cambiar teclado K1', type: 'select', options: [['memory','Teclas de memoria [4x6]'],['compact','Teclado compacto [4x5 + =/↵]']],
+      get: function(){ return S.k1; }, set: function(v){ S.k1 = v; } },
+    { label: 'Cambiar teclado K2', type: 'select', options: [['func','Teclas de función [4x5]'],['compact','Compacto [4x3]']],
+      get: function(){ return S.k2; }, set: function(v){ S.k2 = v; } },
+    { label: 'Cambiar teclado NAV', type: 'select', options: [['nav','Navegación de texto [5x4]'],['none','Desactivado']],
+      get: function(){ return S.nav; }, set: function(v){ S.nav = v; if (v === 'none' && keypadTab === 2) keypadTab = 0; } },
+    { label: 'Distribuciones en horizontal', type: 'select', options: [['right','Teclado a la derecha'],['below','Debajo de la cinta']],
+      get: function(){ return S.horiz; }, set: function(v){ S.horiz = v; } },
+    { label: 'Tamaño del teclado vertical', type: 'select', options: [['small','Pequeño'],['normal','Normal'],['large','Grande']],
+      get: function(){ return S.keyV; }, set: function(v){ S.keyV = v; } },
+    { label: 'Tamaño del teclado horizontal', type: 'select', options: [['small','Pequeño'],['normal','Normal'],['large','Grande']],
+      get: function(){ return S.keyH; }, set: function(v){ S.keyH = v; } },
+    { label: 'Tamaño de fuente del teclado', desc: 'El tamaño de los números de las teclas.', type: 'select', options: [['16','16'],['18','18'],['20','20'],['24','24'],['28','28']],
+      get: function(){ return S.keyFont; }, set: function(v){ S.keyFont = parseInt(v, 10); } },
+    { label: 'Estilo moderno', desc: 'Teclas redondeadas con espacio. Si está OFF, estilo clásico: teclas cuadradas sin espacio.', type: 'toggle',
+      get: function(){ return S.modern; }, set: function(v){ S.modern = v; } },
+    { label: 'Cambiar de teclado deslizando', desc: 'Desliza a izquierda/derecha sobre el teclado para cambiar K1/K2/NAV/ABC.', type: 'toggle',
+      get: function(){ return S.swipe; }, set: function(v){ S.swipe = v; } },
+    { label: 'Vibración', type: 'toggle',
+      get: function(){ return S.vibrate; }, set: function(v){ S.vibrate = v; } },
+    { label: 'Sonido de teclas', desc: 'Un clic por WebAudio al pulsar una tecla.', type: 'toggle',
+      get: function(){ return S.sound; }, set: function(v){ S.sound = v; } }
+  ]},
+  { section: 'Documentos', rows: [
+    { label: 'Ordenar lista por', type: 'select', options: [['date-asc','Fecha ascendente'],['date-desc','Fecha descendente'],['name','Nombre']],
+      get: function(){ return S.sort; }, set: function(v){ S.sort = v; } },
+    { label: 'Cursor al abrir un documento', type: 'select', options: [['last','Última posición'],['first','Primera línea']],
+      get: function(){ return S.cursor; }, set: function(v){ S.cursor = v; } }
+  ]},
+  { section: 'General', rows: [
+    { label: 'Idioma', desc: 'La interfaz de esta versión web está en español.', type: 'select', options: [['system','Predeterminado del sistema']],
+      get: function(){ return S.language; }, set: function(v){ S.language = v; } }
+  ]}
+];
+function renderSettingsScreen(){
+  var body = $('settings-body');
+  if (!body) return;
+  body.innerHTML = '';
+  SETTINGS_SCHEMA.forEach(function(sec){
+    var h = document.createElement('div');
+    h.className = 'set-section';
+    h.textContent = sec.section;
+    body.appendChild(h);
+    sec.rows.forEach(function(row){
+      var r = document.createElement('div');
+      r.className = 'set-row';
+      var lab = document.createElement('div');
+      lab.className = 'set-label';
+      var t = document.createElement('div');
+      t.className = 'set-title';
+      t.textContent = row.label;
+      lab.appendChild(t);
+      if (row.desc) {
+        var d = document.createElement('div');
+        d.className = 'set-desc';
+        d.textContent = row.desc;
+        lab.appendChild(d);
+      }
+      r.appendChild(lab);
+      if (row.type === 'toggle') {
+        var sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = 'switch' + (row.get() ? ' on' : '');
+        sw.setAttribute('role', 'switch');
+        sw.setAttribute('aria-checked', row.get() ? 'true' : 'false');
+        sw.addEventListener('click', function(){
+          row.set(!row.get());
+          sw.classList.toggle('on', row.get());
+          sw.setAttribute('aria-checked', row.get() ? 'true' : 'false');
+          afterSettingChange();
+        });
+        r.appendChild(sw);
+      } else if (row.type === 'select') {
+        var sel = document.createElement('select');
+        row.options.forEach(function(op){
+          var o = document.createElement('option');
+          o.value = String(op[0]);
+          o.textContent = op[1];
+          if (String(row.get()) === String(op[0])) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', function(){
+          row.set(sel.value);
+          afterSettingChange();
+          renderSettingsScreen();
+        });
+        r.appendChild(sel);
+      } else if (row.type === 'action') {
+        var val = document.createElement('span');
+        val.className = 'set-value';
+        val.textContent = row.valueText ? row.valueText() : '';
+        r.appendChild(val);
+        r.style.cursor = 'pointer';
+        r.addEventListener('click', function(){ row.action(); });
+      }
+      body.appendChild(r);
+    });
+  });
+}
+function afterSettingChange(){
+  saveSettings();
+  applySettings();
+  renderTape();
+  renderKeypad();
+}
+function openKeyboardEditor(){
+  $('kb-k1').value = S.k1;
+  $('kb-k2').value = S.k2;
+  $('kb-nav').value = S.nav;
+  $('kb-custom-label').value = S.customLabel;
+  openModal('modal-keyboard');
 }
 
 /* ---------- historial / documentos ---------- */
@@ -1222,7 +1813,7 @@ function loadTapeFromHistory(id){
   tapeLines = JSON.parse(JSON.stringify(found.lines));
   currentTapeTitle = found.title;
   currentDocDate = found.date;
-  activeLineIndex = tapeLines.length - 1;
+  activeLineIndex = (S.cursor === 'first') ? 0 : tapeLines.length - 1;
   setTitleUI();
   saveHistoryState();
   renderTape();
@@ -1238,14 +1829,18 @@ function deleteHistoryItem(id){
 function renderHistoryList(){
   var list = $('history-list');
   list.innerHTML = '';
-  if (savedHistories.length === 0) {
+  var items = savedHistories.slice();
+  if (S.sort === 'date-asc') items.sort(function(a, b){ return (a.timestamp || 0) - (b.timestamp || 0); });
+  else if (S.sort === 'date-desc') items.sort(function(a, b){ return (b.timestamp || 0) - (a.timestamp || 0); });
+  else if (S.sort === 'name') items.sort(function(a, b){ return String(a.title).localeCompare(String(b.title), 'es'); });
+  if (items.length === 0) {
     var empty = document.createElement('div');
     empty.className = 'hist-empty';
     empty.textContent = 'No hay cintas guardadas todavía.';
     list.appendChild(empty);
     return;
   }
-  savedHistories.forEach(function(item){
+  items.forEach(function(item){
     var el = document.createElement('div');
     el.className = 'hist-item';
     var t = document.createElement('div');
@@ -1361,11 +1956,65 @@ function downloadText(content, filename, mime){
     URL.revokeObjectURL(link.href);
   }, 500);
 }
-function exportTxt(){
+/* ---------- líneas de la cinta en texto plano ---------- */
+function tapePlainText(line){
+  var part = splitLine(line);
+  if (part.kind === 'subtotal') return '+ ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
+  if (part.kind === 'live') return (part.sign === '-' ? '-' : '+') + ' ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
+  if (part.kind === 'amount') return opDisplay(part.sign) + ' ' + formatNumber(part.amount) + (part.comment ? ' ' + part.comment : '');
+  if (part.kind === 'operator') return opDisplay(part.sign);
+  return part.text || '';
+}
+function tapeDisplayLines(){
+  return tapeLines.map(tapePlainText);
+}
+function tapeTextExport(){
   var content = 'CalcTape Export - ' + currentTapeTitle + '\n=====================\n\n';
-  tapeLines.forEach(function(l, idx){ content += (idx + 1) + '. ' + l.text + '\n'; });
+  tapeDisplayLines().forEach(function(t, idx){ content += (idx + 1) + '. ' + t + '\n'; });
   content += '\n=====================\nTOTAL: ' + formatNumber(runningTotal) + '\n';
-  downloadText(content, currentTapeTitle.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.txt', 'text/plain');
+  return content;
+}
+function tapeHtmlExport(){
+  var rows = tapeLines.map(function(line){
+    var part = splitLine(line);
+    var cls = (part.kind === 'subtotal' || part.kind === 'live') ? 'sub' : ((part.kind === 'amount' && signedAmountFor(part) < 0) ? 'neg' : '');
+    return '<tr><td class="' + cls + '">' + escapeHtml(tapePlainText(line)) + '</td></tr>';
+  }).join('');
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + escapeHtml(currentTapeTitle) + '</title>' +
+    '<style>body{font-family:monospace} .sub{color:#16A34A;font-weight:bold} .neg{color:#DC2626}</style></head>' +
+    '<body><h2>' + escapeHtml(currentTapeTitle) + '</h2><table>' + rows + '</table>' +
+    '<p><b>TOTAL: ' + escapeHtml(formatNumber(runningTotal)) + '</b></p></body></html>';
+}
+function shareTape(){
+  var content = tapeTextExport();
+  var filename = currentTapeTitle.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.txt';
+  var file = null;
+  try {
+    file = new File([content], filename, { type: 'text/plain' });
+  } catch(e){}
+  if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: currentTapeTitle }).catch(function(){ /* cancelado por el usuario */ });
+  } else {
+    downloadText(content, filename, 'text/plain');
+    showToast('Compartir no disponible: cinta descargada como TXT');
+  }
+}
+function copyTapeHtml(){
+  var html = tapeHtmlExport();
+  var text = tapeDisplayLines().join('\n');
+  function done(){ showToast('Cálculo copiado como HTML'); }
+  if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+    var item = new ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([text], { type: 'text/plain' })
+    });
+    navigator.clipboard.write([item]).then(done, function(){ fallbackCopy(html); done(); });
+  } else {
+    fallbackCopy(html); done();
+  }
+}
+function exportTxt(){
+  downloadText(tapeTextExport(), currentTapeTitle.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.txt', 'text/plain');
   showToast('Cinta exportada como TXT');
 }
 function copyTotal(){
@@ -1388,7 +2037,7 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 function copyTape(){
-  var text = tapeLines.map(function(l){ return l.text; }).join('\n');
+  var text = tapeDisplayLines().join('\n');
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function(){ showToast('Cinta copiada'); }, function(){ fallbackCopy(text); showToast('Cinta copiada'); });
   } else {
@@ -1407,14 +2056,13 @@ function toggleOverflow(){
 }
 function handleMenuAction(action){
   toggleOverflow();
-  if (action === 'save') saveCurrentTapeToHistory(true);
-  else if (action === 'rename') renameCurrentTape();
-  else if (action === 'new') newDocument();
-  else if (action === 'export') exportTxt();
+  if (action === 'share') shareTape();
   else if (action === 'print') window.print();
   else if (action === 'copy') copyTape();
-  else if (action === 'settings') openModal('modal-settings');
-  else if (action === 'help') openModal('modal-help');
+  else if (action === 'copyhtml') copyTapeHtml();
+  else if (action === 'copytotal') copyTotal();
+  else if (action === 'keyboard') openKeyboardEditor();
+  else if (action === 'news') openModal('modal-news');
 }
 
 /* ---------- atajos de teclado físico ---------- */
@@ -1459,18 +2107,13 @@ function init(){
   $('btn-menu').addEventListener('click', toggleDrawer);
   $('scrim').addEventListener('click', closeDrawer);
   $('doc-title').addEventListener('click', renameCurrentTape);
-  $('btn-layout').addEventListener('click', function(){
-    compactKeypad = !compactKeypad;
-    saveSettings();
-    renderKeypad();
-    showToast(compactKeypad ? 'Teclado compacto' : 'Teclado estándar');
-  });
+  $('btn-layout').addEventListener('click', function(){ openThemes(); });
   $('btn-theme').addEventListener('click', function(){
-    darkMode = !darkMode;
-    if (darkMode) { document.documentElement.setAttribute('data-theme', 'dark'); }
-    else { document.documentElement.setAttribute('data-theme', 'light'); }
+    S.dark = !S.dark;
     saveSettings();
     applySettings();
+    renderTape();
+    renderKeypad();
   });
   $('btn-overflow').addEventListener('click', function(e){ e.stopPropagation(); toggleOverflow(); });
   document.addEventListener('click', function(e){
@@ -1499,8 +2142,10 @@ function init(){
     if (e.target.files && e.target.files[0]) importBackupFile(e.target.files[0]);
     e.target.value = '';
   });
-  $('btn-settings').addEventListener('click', function(){ closeDrawer(); openModal('modal-settings'); });
+  $('btn-settings').addEventListener('click', function(){ closeDrawer(); renderSettingsScreen(); openModal('modal-settings'); });
   $('btn-info').addEventListener('click', function(){ closeDrawer(); openModal('modal-info'); });
+  $('btn-save-history').addEventListener('click', function(){ closeDrawer(); saveCurrentTapeToHistory(true); });
+  $('btn-help').addEventListener('click', function(){ closeDrawer(); openModal('modal-help'); });
   document.querySelectorAll('[data-close]').forEach(function(b){
     b.addEventListener('click', function(){ closeModal(b.dataset.close); });
   });
@@ -1509,41 +2154,68 @@ function init(){
   });
 
   $('vb-tab').addEventListener('click', function(){
-    if (keypadTab === 2) { keypadTab = 0; }
-    else { keypadTab = keypadTab === 0 ? 1 : 0; }
+    if (commentEditing) { blurActiveInput(); keypadTab = 0; renderKeypad(); return; }
+    var tabs = [0, 1];
+    if (S.nav !== 'none') tabs.push(2);
+    var i = tabs.indexOf(keypadTab);
+    keypadTab = tabs[(i + 1) % tabs.length];
     renderKeypad();
   });
   $('vb-abc').addEventListener('click', function(){
-    keypadTab = keypadTab === 2 ? 0 : 2;
-    renderKeypad();
+    if (commentEditing) { blurActiveInput(); } else { focusCommentInput(); }
   });
   $('vb-kbd').addEventListener('click', function(){
-    keypadTab = keypadTab === 2 ? 0 : 2;
-    renderKeypad();
-    var inp = document.querySelector('.comment-input[data-idx="' + activeLineIndex + '"]');
-    if (inp && keypadTab === 2) inp.focus();
+    if (commentEditing) { blurActiveInput(); } else { focusCommentInput(); }
+  });
+  $('fab').addEventListener('click', function(){
+    tapeFull = !tapeFull;
+    document.getElementById('app').classList.toggle('tape-full', tapeFull);
+    $('fab-expand').classList.toggle('hidden', tapeFull);
+    $('fab-collapse').classList.toggle('hidden', !tapeFull);
+    if (!tapeFull && !commentEditing) $('keypad').classList.remove('kbd-hidden');
   });
   $('vb-undo').addEventListener('click', undo);
   $('vb-redo').addEventListener('click', redo);
   $('vb-copy').addEventListener('click', copyTotal);
 
-  $('set-decimals').addEventListener('change', function(e){
-    roundingDecimals = e.target.value === 'auto' ? 'auto' : parseInt(e.target.value, 10);
+  /* deslizar sobre el teclado para cambiar K1/K2/NAV/ABC */
+  var swipeStart = null;
+  $('keypad').addEventListener('touchstart', function(e){
+    if (!S.swipe) return;
+    var t = e.changedTouches[0];
+    swipeStart = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  $('keypad').addEventListener('touchend', function(e){
+    if (!S.swipe || !swipeStart) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - swipeStart.x, dy = t.clientY - swipeStart.y;
+    swipeStart = null;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > 40) return;
+    var seq = ['K1', 'K2'];
+    if (S.nav !== 'none') seq.push('NAV');
+    seq.push('ABC');
+    var cur = commentEditing ? 'ABC' : (keypadTab === 0 ? 'K1' : (keypadTab === 1 ? 'K2' : 'NAV'));
+    var i = seq.indexOf(cur);
+    var next = seq[(i + (dx < 0 ? 1 : -1) + seq.length) % seq.length];
+    if (next === 'ABC') { focusCommentInput(); return; }
+    if (commentEditing) blurActiveInput();
+    keypadTab = next === 'K1' ? 0 : (next === 'K2' ? 1 : 2);
+    renderKeypad();
+  }, { passive: true });
+
+  $('kb-apply').addEventListener('click', function(){
+    S.k1 = $('kb-k1').value;
+    S.k2 = $('kb-k2').value;
+    S.nav = $('kb-nav').value;
+    S.customLabel = $('kb-custom-label').value.trim() || 'Botón personalizado';
+    if (S.nav === 'none' && keypadTab === 2) keypadTab = 0;
     saveSettings();
-    renderTape();
+    applySettings();
+    renderKeypad();
+    closeModal('modal-keyboard');
+    showToast('Teclado actualizado');
   });
-  $('set-dark').addEventListener('click', function(){ darkMode = true; saveSettings(); applySettings(); renderTape(); });
-  $('set-light').addEventListener('click', function(){ darkMode = false; saveSettings(); applySettings(); renderTape(); });
-  $('set-compact-on').addEventListener('click', function(){ compactKeypad = true; saveSettings(); applySettings(); renderKeypad(); });
-  $('set-compact-off').addEventListener('click', function(){ compactKeypad = false; saveSettings(); applySettings(); renderKeypad(); });
-  $('set-font-minus').addEventListener('click', function(){
-    currentFontSize = Math.max(12, Math.min(24, currentFontSize - 1));
-    saveSettings(); applySettings();
-  });
-  $('set-font-plus').addEventListener('click', function(){
-    currentFontSize = Math.max(12, Math.min(24, currentFontSize + 1));
-    saveSettings(); applySettings();
-  });
+  renderSettingsScreen();
 }
 
 init();
